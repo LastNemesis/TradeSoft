@@ -11,11 +11,11 @@ namespace TradeSoft;
 public class Strategy
 {
     protected static int id_counter = 0;
-    private int id { get; set; }
+    private int Id { get; set; }
     private Broker Broker { get; set; }
     public Strategy()
     { 
-        id = Strategy.id_counter;
+        Id = Strategy.id_counter;
 		Strategy.id_counter += 1;
     }
     public virtual void Next(Tick tick)
@@ -24,19 +24,19 @@ public class Strategy
     }
     private void Sell(int quantity, float price)
     {
-        Order order = new Order(this.id, price, quantity, DateTime.Now, OrderType.sell);
+        Order order = new Order(this.Id, price, quantity, DateTime.Now, OrderType.sell);
         this.Broker.sell(order);
     }
 
     private void Buy(int quantity, float price)
     {
-        Order order = new Order(this.id, price, quantity, DateTime.Now, OrderType.buy);
+        Order order = new Order(this.Id, price, quantity, DateTime.Now, OrderType.buy);
         this.Broker.buy(order);
     }
 
     public void Close(Tick lastTick)
     {
-        int position = this.Broker.GetPosition(this.id);
+        int position = this.Broker.GetPosition(this.Id);
         if(position > 0) //long position
         {
             this.Sell(position, lastTick.price);
