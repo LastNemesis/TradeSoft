@@ -12,7 +12,7 @@ public class Strategy
 {
     protected static int id_counter = 0;
     private int id;
-    private Broker? broker;
+    private Broker broker;
     public Strategy()
     { 
         id = Strategy.id_counter;
