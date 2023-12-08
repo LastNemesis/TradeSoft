@@ -9,8 +9,11 @@ namespace TradeSoft
     public class Tick
     {
         public DateTime time;
+
         public string type;
+
         public int quantity;
+
         public float price;
 
         public Tick(DateTime time, string type, int quantity, float price)

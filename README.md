@@ -3,7 +3,7 @@ A backtesting software in C#/.Net programming language, which allows fast implem
 
 ## Table of Contents
 
-- [Project Name](#project-name)
+- [TradeSoft](#project-name)
   - [Table of Contents](#table-of-contents)
   - [Description](#description)
   - [Features](#features)
