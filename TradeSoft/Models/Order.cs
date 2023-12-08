@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TradeSoft
+namespace TradeSoft.Models
 {
-    /*Creation of class order
-     * This classe encapsule all information that are necessary to make an order (buy or sell)
+    /* Class ORDER
+     * This class encapsule all information that are necessary to make an order (buy or sell)
      * 
      * Order instances are created by the Strategy class, when an instance of strategy makes a decision.
      * 
@@ -20,30 +20,40 @@ namespace TradeSoft
      */
     public class Order
     {
-        private int Strat_ID { get; set; }   //Unique identifier of the strategy behind this order
-        private float Price { get; set; }    //price of the order
-        private float Quantity { get; set; } //peut être nommé "size" si vous préférez
-        private OrderType Type { get; set; } //buy or sell
-        private DateTime DT { get; set; }    //order time
-
+        // Unique identifier of the strategy behind his order
+        private int Strat_ID { get; set; }
+        
+        // Order price
+        private float Price { get; set; }
+        
+        // Could be named size
+        private float Quantity { get; set; }
+        
+        // Buy or sell
+        private OrderType Type { get; set; }
+        
+        // Order time-stamp
+        private DateTime DT { get; set; }
+        
+        // Execution data
         private ExecutionData executionData { get; set; }
+        
 
         public Order(int strat_ID, float price, float quantity, OrderType type, DateTime dt)
         {
+            
             Strat_ID = strat_ID;
+            
             Price = price;
+            
             Quantity = quantity;
+            
             Type = type;
+            
             DT = dt;
         }
     }
 
-    public class ExecutionData
-    {
-        private float price { get; set; }    //price of the order
-        private float quantity { get; set; } //peut être nommé "size" si vous préférez
-        private DateTime dt { get; set; }    //order time
-    }
 
     enum OrderType
     {

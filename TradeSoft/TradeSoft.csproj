@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove=".gitignore" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="tradesoft-ticks-sample.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

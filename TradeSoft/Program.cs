@@ -9,6 +9,7 @@ namespace Main
         static void Main(string[] args)
         {
             using (var reader = new StreamReader("tradesoft-ticks-sample.csv"))
+
             {
                 List<Tick> tickList = new List<Tick>();
                 string line = reader.ReadLine();
@@ -26,5 +27,3 @@ namespace Main
         }
     }
 }
-
-

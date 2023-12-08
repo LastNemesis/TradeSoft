@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TradeSoft
+namespace TradeSoft.Models
 {
     public class Tick
     {
@@ -16,11 +16,15 @@ namespace TradeSoft
 
         public float price;
 
+        // Constructor
         public Tick(DateTime time, string type, int quantity, float price)
         {
             this.time = time;
+
             this.type = type;
+
             this.quantity = quantity;
+
             this.price = price;
         }
     }
