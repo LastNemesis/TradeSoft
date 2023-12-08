@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System;
+using TradeSoft.Tick;
 
 namespace Main
 {
@@ -26,19 +27,4 @@ namespace Main
     }
 }
 
-class Tick
-{
-    public DateTime time;
-    public string type;
-    public int quantity;
-    public float price;
-
-    public Tick(DateTime time, string type, int quantity, float price)
-    {
-        this.time = time;
-        this.type = type;
-        this.quantity = quantity;
-        this.price = price;
-    }
-}
 
