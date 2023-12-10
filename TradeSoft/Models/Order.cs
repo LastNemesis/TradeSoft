@@ -71,7 +71,7 @@ namespace TradeSoft.Models
 
 
 
-        private Order(int strat_ID, float price, float quantity, OrderType type, DateTime dt)
+        public Order(int strat_ID, float price, float quantity, OrderType type, DateTime dt)
         {
             
             _strat_ID = strat_ID;
@@ -87,7 +87,7 @@ namespace TradeSoft.Models
     }
 
 
-    enum OrderType
+    public enum OrderType
     {
         buy,
         sell
