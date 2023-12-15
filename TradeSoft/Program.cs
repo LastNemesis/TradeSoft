@@ -1,6 +1,6 @@
 ﻿using System.IO;
 using System;
-using static TradeSoft.Models.Tick;
+using TradeSoft.Models;
 
 namespace Main
 {
