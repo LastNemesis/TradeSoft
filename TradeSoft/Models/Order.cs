@@ -63,7 +63,7 @@ namespace TradeSoft.Models
             set { _dt = DateTime.Now; }
         }
 
-        public ExecutionData executionData
+        public ExecutionData EData
         {
             get { return _executionData; }
             set { _executionData = value; }

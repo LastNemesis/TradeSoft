@@ -24,13 +24,13 @@ public class Strategy
         {
             return;
         }
-        private void Sell(int quantity, float price)
+        private void Sell(float quantity, float price)
         {
             Order order = new Order(this.Id, price, quantity, OrderType.sell, DateTime.Now);
             this.Broker.sell(order);
         }
 
-        private void Buy(int quantity, float price)
+        private void Buy(float quantity, float price)
         {
             Order order = new Order(this.Id, price, quantity, OrderType.buy, DateTime.Now);
             this.Broker.buy(order);
@@ -38,7 +38,7 @@ public class Strategy
 
         public void Close(Tick lastTick)
         {
-            int position = this.Broker.GetPosition(this.Id);
+            float position = this.Broker.GetPositionValue(this.Id);
             if (position > 0) //long position
             {
                 this.Sell(position, lastTick.price);
