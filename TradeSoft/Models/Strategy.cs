@@ -1,19 +1,29 @@
 ﻿using System;
 using System.Collections;
 using static System.Net.Mime.MediaTypeNames;
-using TradeSoft.Models;
 
-namespace TradeSoft.Services
+namespace TradeSoft.Models
 {
     public class Strategy
     {
         protected static int id_counter = 0;
-        private int Id { get; set; }
-        private Broker Broker { get; set; }
+        private int _id;
+        private Broker _broker;
+
+        public int Id
+        {
+            get { return _id; }
+        }
+
+        public Broker Broker
+        {
+            set { _broker = value; }
+        }
+
         public Strategy()
         {
-            Id = Strategy.id_counter;
-            Strategy.id_counter += 1;
+            _id = id_counter;
+            id_counter += 1;
         }
         public virtual void Next(Tick tick)
         {
@@ -21,26 +31,26 @@ namespace TradeSoft.Services
         }
         private void Sell(int quantity, float price)
         {
-            Order order = new Order(this.Id, price, quantity, OrderType.sell, DateTime.Now);
-            this.Broker.sell(order);
+            Order order = new Order(Id, price, quantity, OrderType.sell, DateTime.Now);
+            _broker.sell(order);
         }
 
         private void Buy(int quantity, float price)
         {
-            Order order = new Order(this.Id, price, quantity, OrderType.buy, DateTime.Now);
-            this.Broker.buy(order);
+            Order order = new Order(Id, price, quantity, OrderType.buy, DateTime.Now);
+            _broker.buy(order);
         }
 
         public void Close(Tick lastTick)
         {
-            int position = this.Broker.GetPosition(this.Id);
+            int position = _broker.GetPosition(Id);
             if (position > 0) //long position
             {
-                this.Sell(position, lastTick.price);
+                Sell(position, lastTick.price);
             }
             else if (position < 0) //short position
             {
-                this.Buy(position, lastTick.price);
+                Buy(position, lastTick.price);
             }
         }
 
