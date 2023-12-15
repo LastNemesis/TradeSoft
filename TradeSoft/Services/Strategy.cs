@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections;
 using static System.Net.Mime.MediaTypeNames;
+using static TradeSoft.Models.OrderType;
+using static TradeSoft.Models.Order;
+using static TradeSoft.Models.Tick;
+using static TradeSoft.Broker;
 using TradeSoft.Models;
 
 namespace TradeSoft.Services
+public class Strategy
 {
     public class Strategy
     {
