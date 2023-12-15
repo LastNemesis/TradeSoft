@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TradeSoft.Models
 {
