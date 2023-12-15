@@ -11,7 +11,7 @@ namespace TradeSoft.Services
     {
         private Strategy[]? _strategies;
 
-        StrategyHandler()
+        public StrategyHandler()
         {
             LoadStrategies();
         }
