@@ -21,41 +21,73 @@ namespace TradeSoft.Models
     public class Order
     {
         // Unique identifier of the strategy behind his order
-        private int Strat_ID { get; set; }
-        
+        private int _strat_ID;
+
         // Order price
-        private float Price { get; set; }
-        
+        private float _price;
+
         // Could be named size
-        private float Quantity { get; set; }
-        
+        private float _quantity;
+
         // Buy or sell
-        private OrderType Type { get; set; }
-        
+        private OrderType _type { get; set; }
+
         // Order time-stamp
-        private DateTime DT { get; set; }
-        
+        private DateTime _dt;
+
         // Execution data
-        private ExecutionData executionData { get; set; }
-        
+        private ExecutionData _executionData;
+
+
+        //All preperties, getter and setter of each field
+        public int Strat_ID
+        {
+            get { return _strat_ID; }
+            set { _strat_ID = value; }
+        }
+
+        public float Price
+        {
+            get { return _price; }
+            set { _price = value; }
+        }
+
+        public float Quantity
+        {
+            get { return _quantity; }
+            set { _quantity = value; }
+        }
+        public DateTime DT
+        {
+            get { return _dt; }
+            set { _dt = DateTime.Now; }
+        }
+
+        public ExecutionData executionData
+        {
+            get { return _executionData; }
+            set { _executionData = value; }
+        }
+
+
 
         public Order(int strat_ID, float price, float quantity, OrderType type, DateTime dt)
         {
             
-            Strat_ID = strat_ID;
+            _strat_ID = strat_ID;
             
-            Price = price;
+            _price = price;
             
-            Quantity = quantity;
+            _quantity = quantity;
             
-            Type = type;
+            _type = type;
             
-            DT = dt;
+            _dt = dt;
         }
     }
 
 
-    enum OrderType
+    public enum OrderType
     {
         buy,
         sell
