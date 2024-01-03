@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace TradeSoft.Models
 {
     //class representing the Position held by a Strategy in the maker
-    internal class Position
+    public class Position
     {
         //Strategy id used to identified the corresponding strategy
         public int Strat_ID;

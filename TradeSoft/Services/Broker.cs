@@ -8,7 +8,7 @@ using TradeSoft.Models;
 
 namespace TradeSoft.Services
 {
-    internal class Broker
+    public class Broker
     {
         //store all the orders sent to the broker
         private Order[] _orders = Array.Empty<Order>();
