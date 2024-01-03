@@ -16,7 +16,7 @@ namespace TradeSoft.Services
         {
 
             // Creating the list of ticks
-            List<Tick> tickList = new List<Tick>();
+            List<Tick> tickList = new();
 
             // Loading the CSV file containing the sample market data
             using (var reader = new StreamReader(filePath))
@@ -51,6 +51,62 @@ namespace TradeSoft.Services
             }
 
             // Returning the Tick list
+            return tickList;
+        }
+
+
+
+        public List<Tick> ResampleData(List<Tick> initialTickList, TimeSpan timeSpan)
+        {
+            // Creating the list of ticks
+            List<Tick> tickList = new();
+
+            // Checking if the list is not null or empty
+            if (initialTickList == null || initialTickList.Count == 0)
+            {
+                return tickList;
+            }
+
+            // Sort the initialTickList by time
+            //initialTickList.Sort((a, b) => a.time.CompareTo(b.time));
+
+            // Determine the start and end time for resampling
+            DateTime startTime = initialTickList[0].time;
+            DateTime endTime = initialTickList[initialTickList.Count - 1].time;
+
+            // Loop through time intervals defined by timeFrame
+            for (DateTime currentTime = startTime; currentTime <= endTime; currentTime += timeSpan)
+            {
+                // Creating the list of possible Ticks within the current time frame
+                var ticksWithinInterval = initialTickList.Where(tick => tick.time >= currentTime && tick.time < currentTime + timeSpan).ToList();
+
+                // Creating the new Tick that contains the values of the Ticks contained within the interval
+                if (ticksWithinInterval.Any())
+                {
+                    // Creating the total quantity
+                    int totalQuantity = ticksWithinInterval.Sum(t => t.quantity);
+
+                    // Creating the price by creating the average of the price within the interval
+                    float price = ticksWithinInterval.Sum(t => t.price) / ticksWithinInterval.Count;
+
+                    // Creating the price by taking the price of the first Tick
+                    //float price = ticksWithinInterval.First().price;
+
+                    // Create a new tick with aggregated data for the interval
+                    Tick resampledTick = new Tick(currentTime, "ResampledType", totalQuantity, price);
+
+                    // Adding the new Tick inside the list
+                    tickList.Add(resampledTick);
+                }
+                // Creating a placeholder tick, if there are no tick contained within the interval
+                else
+                {
+                    // Adding the placeholder Tick inside the list
+                    tickList.Add(new Tick(currentTime, "Empty", 0, 0));
+                }
+            }
+
+            // Returning the resampled Tick list
             return tickList;
         }
     }
