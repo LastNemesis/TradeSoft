@@ -17,7 +17,10 @@ namespace TradeSoft.Models
 
         public Broker Broker
         {
-            set { _broker = value; }
+            set 
+            { 
+                _broker = value ; 
+            }
         }
 
         public Strategy()

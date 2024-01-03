@@ -12,7 +12,7 @@ namespace TradeSoft.Services
 {
     public class DataService
     {
-        public int FetchData(string filePath)
+        public List<Tick> FetchData(string filePath)
         {
 
             // Creating the list of ticks
@@ -51,7 +51,7 @@ namespace TradeSoft.Services
             }
 
             // Returning the Tick list
-            return tickList.Count;
+            return tickList;
         }
     }
 }
