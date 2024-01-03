@@ -27,7 +27,7 @@ namespace TradeSoft.Models
         }
 
         //method used to update the position based on an applied order, called by the Broker
-        public void updatePosition(Order order)
+        public void UpdatePosition(Order order)
         {
             _position += order.EData.Quantity;
         }

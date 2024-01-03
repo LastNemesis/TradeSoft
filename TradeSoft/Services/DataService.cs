@@ -23,7 +23,7 @@ namespace TradeSoft.Services
             {
 
                 // Creating the variable containing a tick, and loading the first line
-                string line = reader.ReadLine();
+                string? line = reader.ReadLine();
 
                 // Creating the loop that reads every line until the last empty line
                 while ((line = reader.ReadLine()) != null)

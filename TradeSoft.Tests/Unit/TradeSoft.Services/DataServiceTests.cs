@@ -15,7 +15,7 @@ namespace TradeSoft.Tests.Unit.TradeSoft.Services
         public void FetchData_WhenFileExists_ReturnsCountAndNotNullValues()
         {
             // Arrange
-            DataService dataService = new DataService();
+            DataService dataService = new();
             string filePath = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-sample.csv");
 
             // Act

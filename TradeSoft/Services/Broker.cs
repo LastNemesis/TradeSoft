@@ -51,7 +51,7 @@ namespace TradeSoft.Services
         public void ApplyOrder(Order order)
         {
             Position position = GetPosition(order.Strat_ID);
-            position.updatePosition(order);
+            position.UpdatePosition(order);
 
             _ordersLastTick.Append(order);
             _orders.Append(order);
