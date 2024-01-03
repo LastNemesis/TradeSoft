@@ -20,6 +20,7 @@ namespace TradeSoft.Tests.Unit.TradeSoft.Services
 
             // Act
             List<Tick> tickList = dataService.FetchData(filePath);
+            
             int expectedCount = 129324;
             int actualCount = tickList.Count;
 
@@ -31,6 +32,32 @@ namespace TradeSoft.Tests.Unit.TradeSoft.Services
 
             // Assert that the value of the last line is not null
             Assert.NotNull(tickList[expectedCount - 1]);
+        }
+
+        [Fact]
+        public void ResampleData_WhenFileExists_ReturnsResampledList()
+        {
+            // Arrange
+            DataService dataService = new();
+            string filePath = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-sample.csv");
+
+            // Act
+            TimeSpan timeSpan = new TimeSpan(0, 30, 0);
+            
+            List<Tick> tickList = dataService.FetchData(filePath);
+            List<Tick> resampledTickList = dataService.ResampleData(tickList, timeSpan);
+            
+            int expectedCount = 66;
+            int actualCount = resampledTickList.Count;
+
+            // Assert the number of lines
+            Assert.Equal(expectedCount, actualCount);
+
+            // Assert that the first line is not null
+            Assert.NotNull(resampledTickList[0]);
+
+            // Assert that the value of the last line is not null
+            Assert.NotNull(resampledTickList[actualCount - 1]);
         }
     }
 }

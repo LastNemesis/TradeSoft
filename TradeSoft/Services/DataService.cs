@@ -14,7 +14,6 @@ namespace TradeSoft.Services
     {
         public List<Tick> FetchData(string filePath)
         {
-
             // Creating the list of ticks
             List<Tick> tickList = new();
 
@@ -47,14 +46,38 @@ namespace TradeSoft.Services
                     // Adding the three values into the Tick list
                     tickList.Add(new Tick(date, type, quantity, price));
                 }
-                
             }
 
             // Returning the Tick list
             return tickList;
         }
 
+        public void WriteData(List<Tick> tickList, string filePath)
+        {
+            // Checking if the list is not null or empty
+            if (tickList == null || tickList.Count == 0)
+            {
+                return;
+            }
 
+            // Writing into the CSV file 
+            using (var writer = new StreamWriter(filePath))
+            {
+                // Writing header line if needed
+                writer.WriteLine("Time,Type,Quantity,Price");
+
+                // Writing each tick as a line in the CSV file
+                foreach (var tick in tickList)
+                {
+                    
+                    // Creating the line to insert inside the CSV
+                    string line = $"{tick.time.ToString("dd-MM-yyyy HH:mm:ss")},{tick.type},{tick.quantity},{tick.price.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+                    
+                    // Writing the line inside the CSV
+                    writer.WriteLine(line);
+                }
+            }
+        }
 
         public List<Tick> ResampleData(List<Tick> initialTickList, TimeSpan timeSpan)
         {
@@ -74,9 +97,12 @@ namespace TradeSoft.Services
             DateTime startTime = initialTickList[0].time;
             DateTime endTime = initialTickList[initialTickList.Count - 1].time;
 
+            // Loop through 3 time intervals defined by timeFrame for Testing purposes
+            //for (DateTime currentTime = startTime; currentTime <= startTime + timeSpan + timeSpan; currentTime += timeSpan)
+
             // Loop through time intervals defined by timeFrame
             for (DateTime currentTime = startTime; currentTime <= endTime; currentTime += timeSpan)
-            {
+                {
                 // Creating the list of possible Ticks within the current time frame
                 var ticksWithinInterval = initialTickList.Where(tick => tick.time >= currentTime && tick.time < currentTime + timeSpan).ToList();
 
