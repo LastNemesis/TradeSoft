@@ -209,85 +209,6 @@ namespace TradeSoft.Services
 
 
         /*
-        public void Returns(ref List<float> allReturn, Order[] orders)
-        {
-            float uniqueReturn;
-
-            for (int i=0 ; i < orders.Length; i++)
-            {
-                if (i==0)
-                    allReturn.Add(0); //en verité c'est null mais bon
-                else
-                {
-                    uniqueReturn = (orders[i].EData.Price - orders[i - 1].EData.Price) / orders[i-1].EData.Price * 100;
-                    allReturn.Add(uniqueReturn);
-                }
-            }
-        }
-        
-        
-        private void TReturn(List<float> returns)
-        {
-            foreach (float r in returns)
-            {
-                totalReturn += r;
-            }
-        }
-        
-        private void EReturn(int lenghtListReturn) //on passera en paramètre le nombre d'élément dans la liste de return
-        {
-                expectedReturn = totalReturn/ (lenghtListReturn-1); //-1 parce que le premier return est null, donc ne compte pas 
-        }
-        
-
-        private void TLoss(List<float> returns)
-        {
-            foreach (float r in returns)
-            {
-                if (r < 0)
-                    totalLoss += r;
-            }
-        }
-
-        private void MLoss(List<float> returns)
-        {
-            //Counting the number of loss
-            int numberOfLoss = 0;
-            foreach (float r in returns)
-            {
-                if (r < 0)
-                    numberOfLoss++;
-            }
-
-            //Caluculating mean of losses
-            meanLoss = totalLoss / numberOfLoss;
-        }
-
-
-        private void TGain(List<float> returns)
-        {
-            foreach (float r in returns)
-            {
-                if (r > 0)
-                    totalGain += r;
-            }
-        }
-
-        private void MGain(List<float> returns)
-        {
-            //Counting the number of gain
-            int numberOfGain = 0;
-            foreach (float r in returns)
-            {
-                if (r < 0)
-                    numberOfGain++;
-            }
-
-            //Caluculating mean of gain
-            meanGain = totalGain / numberOfGain;
-        }
-        
-
         private void DrawDown(Order[] orders)
         {
             float minPrice = 0;
@@ -354,48 +275,6 @@ namespace TradeSoft.Services
         */
     }
 }
-
-/*
-
-//properties :
-public float TReturn
-{
-    get { return _totalReturn; }
-    set { _totalReturn = value; }
-}
-
-public float EReturn
-{
-    get { return _expectedReturn; }
-    set { _expectedReturn = value; }
-}
-
-public float TLoss
-{
-    get { return _totalLoss; }
-    set { _totalLoss = value; }
-}
-
-public float MLoss
-{
-    get { return _meanLoss; }
-    set { _meanLoss = value; }
-}
-
-public float TGain
-{
-    get { return _totalGain; }
-    set { _totalGain = value; }
-}
-
-public float MGain
-{
-    get { return _meanGain; }
-    set { _meanGain = value; }
-}
-
-*/
-
 
 
 /* The maximum drawdown is the largest gap between a top and a trench.
