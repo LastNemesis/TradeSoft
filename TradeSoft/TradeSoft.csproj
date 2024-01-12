@@ -12,6 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Resources\tradesoft-ticks-sample.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="tradesoft-ticks-sample.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

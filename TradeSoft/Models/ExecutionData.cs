@@ -36,7 +36,7 @@ namespace TradeSoft.Models
             set { _dt = DateTime.Now; }
         }
 
-        private ExecutionData(float price, float quantity, DateTime dt)
+        public ExecutionData(float price, float quantity, DateTime dt)
         {
             _price = price;
 

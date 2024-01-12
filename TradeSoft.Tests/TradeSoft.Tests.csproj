@@ -24,6 +24,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Integration\" />
+    <Folder Include="Functional\" />
+    <Folder Include="Helpers\" />
+    <Folder Include="Unit\TradeSoft.Strategies\" />
+    <Folder Include="Unit\TradeSoft.Models\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TradeSoft\TradeSoft.csproj" />
   </ItemGroup>
 
