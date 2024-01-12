@@ -70,6 +70,7 @@ namespace TradeSoft.Tests.AnalyserTest
             result.Should().Be(expectedReturn);
         }
 
+        [Fact]
         public void Analysis_TLoss_ShouldSumAllNegativeReturnsFromListOfReturns()
         {
             //Arrange - get variable, classes, ... to test
@@ -83,6 +84,7 @@ namespace TradeSoft.Tests.AnalyserTest
             result.Should().Be(totalLoss);
         }
 
+        [Fact]
         public void Analysis_MLoss_ShouldValueOfMeanLossFromListOfReturns()
         {
             //Arrange - get variable, classes, ... to test
@@ -98,7 +100,7 @@ namespace TradeSoft.Tests.AnalyserTest
             result.Should().Be(totalLoss);
         }
 
-
+        [Fact]
         public void Analysis_TGain_ShouldSumAllPositiveReturnsFromListOfReturns()
         {
             //Arrange - get variable, classes, ... to test
@@ -112,6 +114,7 @@ namespace TradeSoft.Tests.AnalyserTest
             result.Should().Be(totalGain);
         }
 
+        [Fact]
         public void Analysis_MGain_ShouldValueOfMeanGainFromListOfReturns()
         {
             //Arrange - get variable, classes, ... to test
@@ -127,6 +130,7 @@ namespace TradeSoft.Tests.AnalyserTest
             result.Should().Be(meanGain);
         }
 
+        [Fact]
         public void Analysis_Drawdown_ShouldCalculateDrawdown()
         {
             //Arrange - get variable, classes, ... to test
