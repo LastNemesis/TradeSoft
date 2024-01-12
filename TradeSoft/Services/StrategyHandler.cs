@@ -13,7 +13,7 @@ namespace TradeSoft.Services
 {
     internal class StrategyHandler
     {
-        private Strategy[] _strategies = new Strategy[0];
+        private List<Strategy> _strategies = new List<Strategy>();
 
         public StrategyHandler()
         {
@@ -29,7 +29,7 @@ namespace TradeSoft.Services
             //Create an instance for each Strategy type found
             foreach (Type strategy in strategies) {
                 Strategy instance = (Strategy)Activator.CreateInstance(strategy);
-                _strategies.Append(instance);
+                _strategies.Add(instance);
             }
         }
 
@@ -71,7 +71,7 @@ namespace TradeSoft.Services
             }
         }
 
-        public void NotifyStrategies(Order[] orders)
+        public void NotifyStrategies(List<Order> orders)
         {
             if (_strategies == null)
             {

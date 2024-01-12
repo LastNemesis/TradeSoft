@@ -37,6 +37,9 @@ namespace Main
 
             // Writing the resampled data inside a new CSV
             dataService.WriteData(resampledTickList, filePath2);
+
+            Engine engine = new Engine();
+            engine.Run(resampledTickList);
         }
     }
 }

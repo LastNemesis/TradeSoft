@@ -11,13 +11,13 @@ namespace TradeSoft.Services
     public class Broker
     {
         //store all the orders sent to the broker
-        private Order[] _orders = Array.Empty<Order>();
+        private List<Order> _orders = new List<Order>();
 
         //store all the orders in the current Tick of exectution
-        private Order[] _ordersLastTick = Array.Empty<Order>();
+        private List<Order> _ordersLastTick = new List<Order>();
 
         //store all Positions of strategies that sent an order
-        private Position[] _positions = Array.Empty<Position>();
+        private List<Position> _positions = new List<Position>();
 
         //store the marketPrice for the current Tick of execution
         private float _marketPrice = 0f;
@@ -25,24 +25,24 @@ namespace TradeSoft.Services
         //called each tick to simulate the new Tick of execution to update market values
         public void simulateTick(Tick tick)
         {
-            _ordersLastTick = new Order[0];
+            _ordersLastTick = new List<Order>();
             _marketPrice = tick.price;
         }
 
         //called in the case of a Sell order
         public void Sell(Order order) {
-            order.EData.Price = order.Price;
-            order.EData.Quantity = order.Quantity;
-            order.EData.DT = DateTime.Now;
+            Console.WriteLine(order.ToString());
+            ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
+            order.EData = EData;
 
             ApplyOrder(order);
         }
 
         //called in the case of a Buy order
         public void Buy(Order order) {
-            order.EData.Price = order.Price;
-            order.EData.Quantity = order.Quantity;
-            order.EData.DT = DateTime.Now;
+            Console.WriteLine(order.ToString());
+            ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
+            order.EData = EData;
 
             ApplyOrder(order);
         }
@@ -53,8 +53,8 @@ namespace TradeSoft.Services
             Position position = GetPosition(order.Strat_ID);
             position.UpdatePosition(order);
 
-            _ordersLastTick.Append(order);
-            _orders.Append(order);
+            _ordersLastTick.Add(order);
+            _orders.Add(order);
         }
 
         //used to get the Position of a given Strategy
@@ -86,13 +86,13 @@ namespace TradeSoft.Services
         }
 
         //used to get all order for the current Tick of execution
-        public Order[] GetTickOrders()
+        public List<Order> GetTickOrders()
         {
             return _ordersLastTick;
         }
 
         //used to get all orders
-        public Order[] GetAllOrders()
+        public List<Order> GetAllOrders()
         {
             return _orders;
         }
