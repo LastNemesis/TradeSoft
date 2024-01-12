@@ -64,7 +64,7 @@ namespace TradeSoft.Tests.AnalyserTest
             float expectedReturn = totalReturn / allReturns.Count;
 
             //Act - run the méthode to test
-            float result = _analysis.EReturn(allReturns.Count);
+            float result = _analysis.EReturn(allReturns);
 
             //Assert - Waht it should return
             result.Should().Be(expectedReturn);
@@ -94,10 +94,10 @@ namespace TradeSoft.Tests.AnalyserTest
             float meanLoss = totalLoss / nbLoss;
 
             //Act - run the méthode to test
-            float result = _analysis.MLoss(allReturns);
+            float result = _analysis.MLoss(allReturns, totalLoss);
 
             //Assert - Waht it should return
-            result.Should().Be(totalLoss);
+            result.Should().Be(meanLoss);
         }
 
         [Fact]
@@ -124,7 +124,7 @@ namespace TradeSoft.Tests.AnalyserTest
             float meanGain = totalGain / nbGain;
 
             //Act - run the méthode to test
-            float result = _analysis.MGain(allReturns);
+            float result = _analysis.MGain(allReturns, totalGain);
 
             //Assert - Waht it should return
             result.Should().Be(meanGain);
