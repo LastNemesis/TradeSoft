@@ -129,12 +129,12 @@ namespace TradeSoft.Services
             int numberOfGain = 0;
             foreach (float r in returns)
             {
-                if (r < 0)
+                if (r > 0)
                     numberOfGain++;
             }
 
             //Caluculating mean of gain
-            float mean = totalLoss / numberOfGain;
+            float mean = totalGain / numberOfGain;
             return mean;
         }
 
@@ -167,7 +167,7 @@ namespace TradeSoft.Services
 
 
         //Method that call all other methodes to assigne value to the attributes of the class
-        public void runMethods(Order[] orders)
+        public void runMethods(List<Order> orders)
         {
             /* Run SimpleReturn method in order to calculate all returns, and then put them into a list of simple returns */
 
@@ -176,7 +176,7 @@ namespace TradeSoft.Services
             float simpleReturn;
 
             //Go through the list of order, and 
-            for (int i = 0; i < orders.Length; i++)
+            for (int i = 0; i < orders.Count; i++)
             {
                 if (i > 0) //because according to the formula of simple return, there is no return for the first value
                 {
@@ -198,16 +198,20 @@ namespace TradeSoft.Services
             meanLoss = MLoss(allSimpleReturns);
 
             /* Run TLoss method and assigne the result to expectedReturn */
-            totalGain = TLoss(allSimpleReturns);
+            totalGain = TGain(allSimpleReturns);
 
             /* Run MLoss method and assigne the result to meanLoss */
-            meanGain = MLoss(allSimpleReturns);
+            meanGain = MGain(allSimpleReturns);
 
             /* Run MLoss method and assigne the result to meanLoss */
             maxDrawdown = Drawdown(allSimpleReturns);
         }
 
-
+        override
+        public String ToString()
+        {
+            return String.Format("totalReturn: {0}, expectedReturn: {1}, totalLoss: {2}, meanLoss: {3}, totalGain: {4}, meanGain: {5}", totalReturn, expectedReturn, totalLoss, meanLoss, totalGain, meanGain);
+        }
         /*
         private void DrawDown(Order[] orders)
         {
