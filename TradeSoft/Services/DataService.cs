@@ -97,38 +97,46 @@ namespace TradeSoft.Services
             DateTime startTime = initialTickList[0].time;
             DateTime endTime = initialTickList[initialTickList.Count - 1].time;
 
+            // Determine the market time frame
+            TimeSpan marketStartTime = new TimeSpan(9, 0, 0);   // 9:00 AM
+            TimeSpan marketEndTime = new TimeSpan(18, 0, 0);    // 6:00 PM
+
             // Loop through 3 time intervals defined by timeFrame for Testing purposes
             //for (DateTime currentTime = startTime; currentTime <= startTime + timeSpan + timeSpan; currentTime += timeSpan)
 
             // Loop through time intervals defined by timeFrame
             for (DateTime currentTime = startTime; currentTime <= endTime; currentTime += timeSpan)
                 {
-                // Creating the list of possible Ticks within the current time frame
-                var ticksWithinInterval = initialTickList.Where(tick => tick.time >= currentTime && tick.time < currentTime + timeSpan).ToList();
+                // Checking if the market is open or closed based on the hour
+                if (marketStartTime <= currentTime.TimeOfDay && currentTime.TimeOfDay < marketEndTime) {
 
-                // Creating the new Tick that contains the values of the Ticks contained within the interval
-                if (ticksWithinInterval.Any())
-                {
-                    // Creating the total quantity
-                    int totalQuantity = ticksWithinInterval.Sum(t => t.quantity);
+                    // Creating the list of possible Ticks within the current time frame
+                    var ticksWithinInterval = initialTickList.Where(tick => tick.time >= currentTime && tick.time < currentTime + timeSpan).ToList();
 
-                    // Creating the price by creating the average of the price within the interval
-                    float price = ticksWithinInterval.Sum(t => t.price) / ticksWithinInterval.Count;
+                    // Creating the new Tick that contains the values of the Ticks contained within the interval
+                    if (ticksWithinInterval.Any())
+                    {
+                        // Creating the total quantity
+                        int totalQuantity = ticksWithinInterval.Sum(t => t.quantity);
 
-                    // Creating the price by taking the price of the first Tick
-                    //float price = ticksWithinInterval.First().price;
+                        // Creating the price by creating the average of the price within the interval
+                        float price = ticksWithinInterval.Sum(t => t.price) / ticksWithinInterval.Count;
 
-                    // Create a new tick with aggregated data for the interval
-                    Tick resampledTick = new Tick(currentTime, "ResampledType", totalQuantity, price);
+                        // Creating the price by taking the price of the first Tick
+                        //float price = ticksWithinInterval.First().price;
 
-                    // Adding the new Tick inside the list
-                    tickList.Add(resampledTick);
-                }
-                // Creating a placeholder tick, if there are no tick contained within the interval
-                else
-                {
-                    // Adding the placeholder Tick inside the list
-                    tickList.Add(new Tick(currentTime, "Empty", 0, 0));
+                        // Create a new tick with aggregated data for the interval
+                        Tick resampledTick = new Tick(currentTime, "ResampledType", totalQuantity, price);
+
+                        // Adding the new Tick inside the list
+                        tickList.Add(resampledTick);
+                    }
+                    // Creating a placeholder tick, if there are no tick contained within the interval
+                    else
+                    {
+                        // Adding the placeholder Tick inside the list
+                        tickList.Add(new Tick(currentTime, "Empty", 0, 0));
+                    }
                 }
             }
 

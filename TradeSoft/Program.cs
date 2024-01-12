@@ -23,8 +23,8 @@ namespace Main
             // Displaying the number of lines
             Console.WriteLine(tickList.Count);
 
-            // Timeframe wanted
-            TimeSpan timeSpan = new TimeSpan(0, 1, 0);
+            // Timeframe wanted (HH, MM, SS)
+            TimeSpan timeSpan = new TimeSpan(0, 0, 1);
 
             // Resampling the Raw Data
             List<Tick> resampledTickList = dataService.ResampleData(tickList, timeSpan);
@@ -38,8 +38,11 @@ namespace Main
             // Writing the resampled data inside a new CSV
             dataService.WriteData(resampledTickList, filePath2);
 
-            Engine engine = new Engine();
-            engine.Run(resampledTickList);
+            // Creating the engine Object
+            //Engine engine = new Engine();
+
+            // Running the engine with the resampled data
+            //engine.Run(resampledTickList);
         }
     }
 }
