@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace TradeSoft.Models
 {
     //class representing the Position held by a Strategy in the maker
-    internal class Position
+    public class Position
     {
         //Strategy id used to identified the corresponding strategy
         public int Strat_ID;
@@ -27,7 +27,7 @@ namespace TradeSoft.Models
         }
 
         //method used to update the position based on an applied order, called by the Broker
-        public void updatePosition(Order order)
+        public void UpdatePosition(Order order)
         {
             _position += order.EData.Quantity;
         }

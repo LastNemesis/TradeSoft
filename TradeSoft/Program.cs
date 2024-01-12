@@ -1,6 +1,9 @@
 ﻿using System.IO;
 using System;
+
 using TradeSoft.Models;
+using TradeSoft.Services;
+using TradeSoft.Strategies;
 
 namespace Main
 {
@@ -8,22 +11,35 @@ namespace Main
     {
         static void Main(string[] args)
         {
-            using (var reader = new StreamReader("tradesoft-ticks-sample.csv"))
+            // Getting the path of the CSV
+            string filePath1 = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-sample.csv");
 
-            {
-                List<Tick> tickList = new List<Tick>();
-                string line = reader.ReadLine();
-                while ((line = reader.ReadLine()) != null)
-                {
-                    var values = line.Split(',');
-                    DateTime date = Convert.ToDateTime(values[0]);
-                    string type = values[1];
-                    Int32 quantity = Convert.ToInt32(values[2]);
-                    float price = Convert.ToSingle(values[3], System.Globalization.CultureInfo.InvariantCulture);
-                    tickList.Add(new Tick(date,type,quantity,price));
-                }
-                Console.WriteLine(tickList.Count);
-            }
+            // Creating the dataService Object
+            DataService dataService = new DataService();
+
+            // Getting the Raw Data
+            List<Tick> tickList = dataService.FetchData(filePath1);
+
+            // Displaying the number of lines
+            Console.WriteLine(tickList.Count);
+
+            // Timeframe wanted
+            TimeSpan timeSpan = new TimeSpan(0, 1, 0);
+
+            // Resampling the Raw Data
+            List<Tick> resampledTickList = dataService.ResampleData(tickList, timeSpan);
+
+            // Displaying the number of lines
+            Console.WriteLine(resampledTickList.Count);
+
+            // Getting the path of the CSV
+            string filePath2 = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-resample.csv");
+
+            // Writing the resampled data inside a new CSV
+            dataService.WriteData(resampledTickList, filePath2);
+
+            Engine engine = new Engine();
+            engine.Run(resampledTickList);
         }
     }
 }

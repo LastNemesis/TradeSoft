@@ -16,6 +16,12 @@ namespace TradeSoft.Models
 
         public float price;
 
+        override
+        public String ToString()
+        {
+            return String.Format("time: {0} quantity: {1} price {2}", time, quantity, price);
+        }
+
         // Constructor
         public Tick(DateTime time, string type, int quantity, float price)
         {

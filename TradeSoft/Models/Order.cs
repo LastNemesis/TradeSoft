@@ -70,6 +70,12 @@ namespace TradeSoft.Models
         }
 
 
+        override
+        public String ToString()
+        {
+            return String.Format("Strategy {0} price: {1} quantity {2}" ,_strat_ID, _price, _quantity);
+        }
+
 
         public Order(int strat_ID, float price, float quantity, OrderType type, DateTime dt)
         {

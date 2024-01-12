@@ -5,31 +5,35 @@ namespace TradeSoft.Services
 {
     internal class Engine
     {
-        public void Run()
+        public void Run(List<Tick> ticks)
         {
-            //temporary until we have a working Data Service
-            Tick[] ticks = new Tick[10];
-
             Broker broker = new Broker();
             StrategyHandler strategyHandler = new StrategyHandler();
+            strategyHandler.SetBrocker(broker);
 
-            foreach(Tick t in ticks)
+            foreach(Tick tick in ticks)
             {
-                broker.simulateTick(t);
-                strategyHandler.SendTick(t); //to be made async ?
+                Console.WriteLine(tick.ToString());
+                broker.simulateTick(tick);
+                strategyHandler.SendTick(tick); //to be made async ?
 
                 //wait until next tick ? using Clock ?
 
-                Order[] tickOrders = broker.GetTickOrders();
+                List<Order> tickOrders = broker.GetTickOrders();
                 strategyHandler.NotifyStrategies(tickOrders);
+                Console.WriteLine("\n");
             }
 
             //define how we use the ticks to have access to the last tick
             //maybe Strategies directly get market price from Broker in Close method ?
             strategyHandler.CloseStrategies(ticks[^1]);
 
-            Order[] orders = broker.GetAllOrders();
-
+            List<Order> orders = broker.GetAllOrders();
+            foreach(Order order in orders)
+            {
+                Console.WriteLine(order.ToString());
+            }
+            Console.WriteLine(orders.Count);
             //send orders to strategies
 
             //log results: orders/ticks/analysis results

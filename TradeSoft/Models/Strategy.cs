@@ -17,7 +17,10 @@ namespace TradeSoft.Models
 
         public Broker Broker
         {
-            set { _broker = value; }
+            set 
+            { 
+                _broker = value ; 
+            }
         }
 
         public Strategy()
@@ -29,13 +32,13 @@ namespace TradeSoft.Models
         {
             return;
         }
-        private void Sell(float quantity, float price)
+        protected void Sell(float quantity, float price)
         {
             Order order = new Order(Id, price, quantity, OrderType.sell, DateTime.Now);
             _broker.Sell(order);
         }
 
-        private void Buy(float quantity, float price)
+        protected void Buy(float quantity, float price)
         {
             Order order = new Order(Id, price, quantity, OrderType.buy, DateTime.Now);
             _broker.Buy(order);
