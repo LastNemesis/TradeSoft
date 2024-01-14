@@ -38,7 +38,7 @@ namespace TradeSoft.Services
 
             //log results: orders/ticks/analysis results
             Analysis riskAnalysis = new Analysis();
-            riskAnalysis.runMethods(orders);
+            riskAnalysis.runMethods();
 
             Console.WriteLine(riskAnalysis.ToString());
         }

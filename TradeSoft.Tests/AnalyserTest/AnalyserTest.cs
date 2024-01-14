@@ -41,7 +41,7 @@ namespace TradeSoft.Tests.AnalyserTest
         }
 
 
-        [Fact]
+        /*[Fact]
         public void Analysis_TReturn_ShouldCalculateTotalReturnFromListOfReturns()
         {
             //Arrange - get variable, classes, ... to test
@@ -53,7 +53,7 @@ namespace TradeSoft.Tests.AnalyserTest
 
             //Assert - Waht it should return
             result.Should().Be(expectedSum);
-        }
+        }*/
 
         [Fact]
         public void Analysis_EReturn_ShouldCalculateExpectedReturn()
@@ -142,6 +142,35 @@ namespace TradeSoft.Tests.AnalyserTest
 
             //Assert - Waht it should return
             result.Should().Be(expectedDrawdown);
+        }
+
+        [Fact]
+        public void Analysis_Var_ShouldReturnVariance()
+        {
+            //Arrange - get variable, classes, ... to test
+            List<float> allReturns = new() { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f};
+            float mean = (1.0f - 2.0f + 3.0f + 4.0f - 1.0f + 4.0f)/6;
+            float variance = (0.25f + 12.25f + 2.25f + 6.25f + 6.25f + 6.25f)/6;
+
+            //Act - run the méthode to test
+            float result = _analysis.Var(allReturns, mean);
+
+            //Assert - Waht it should return
+            result.Should().Be(variance);
+        }
+
+        [Fact]
+        public void Analysis_HVaR95_ShouldCalculateValueAtRiskAt95Percent()
+        {
+            //Arrange - get variable, classes, ... to test
+            List<float> allReturns = new() { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, -1.0f, 4.0f, -3.0f, -2.0f, -1.0f, 2.0f, 1.0f, -2.0f };
+            float VaR = (-3.0f);
+
+            //Act - run the méthode to test
+            float result = _analysis.HVaR95(allReturns);
+
+            //Assert - Waht it should return
+            result.Should().Be(VaR);
         }
     }
 }

@@ -29,6 +29,9 @@ using TradeSoft.Models;
  * 
  * --> rechercher comment calculer la volatilité (ecart-type) en backtesting
  * (a chaque execution data, sans que ça explose quand on a 1324652243 execution data)
+ * 
+ * On garde TLoss et MLoss pour les afficher que quand le rendement actuel est négatif
+ * On garde TGain et MGain pour les afficher que quand le rendement actuel est positif
  */
 
 namespace TradeSoft.Services
@@ -44,20 +47,19 @@ namespace TradeSoft.Services
 
         private OrderType currentType;
 
-        //Variable storing the amount of the total return over all the period
-        private float totalReturn;
+        /*          About return            */
 
-        //Variable storing the amount of the expected return per transaction
-        private float expectedReturn;
+        private float currentReturn;
+        private float expectedReturn; //expected return per transaction
 
         //Variable storing the amount of the total losses over all the period (do not taking gains into account)
-        private float totalLoss; //intéressant à garder mais à retourner seulement quand le rendement actuel est négatif, pour faire un point sur le négatif
+        private float totalLoss;
 
         //Variable storing mean of losses par transactions (only over losses)
         private float meanLoss;
 
         //Variable storing the amount of the total gain over all the period (do not taking losses into account)
-        private float totalGain; //intéressant à garder mais à retourner seulement quand le rendement actuel est positif, pour faire un point sur le positif
+        private float totalGain;
 
         //Variable storing mean of gain par transactions (only over gains)
         private float meanGain;
@@ -68,6 +70,14 @@ namespace TradeSoft.Services
         private ExecutionData executed;
 
         List<float> historicOfReturns = new List<float>();
+
+        /*          About risk            */
+
+        private float variance;
+        private float SD;
+        private float historicalVaR95;
+        private float historicalVaR99;
+
 
 
         /*      Method for calculation      */
@@ -81,7 +91,7 @@ namespace TradeSoft.Services
          */
 
 
-        public void dataAnalysis() //méthode dans laquelle on appelle les autres méthodes et ou on fait les check pour savoir quoi faire
+        public void runMethods() //méthode dans laquelle on appelle les autres méthodes et ou on fait les check pour savoir quoi faire
         {
             currentType = executed.Type;     //je récupère le type, car on en a besoin pour savoir si on doit calculer le rendement ou non
             currentAmount += executed.Price; //update du montant du portefeuille
@@ -90,58 +100,35 @@ namespace TradeSoft.Services
              * si oui, on est en long, donc on calcule le rendement à la prochaine vente
              * si non, on est en short, donc on calcule le rendement au prochain buy 
              */
-            if (actualQuantity >= 0) 
+            if ((actualQuantity >= 0 & currentType == OrderType.sell) || (actualQuantity < 0 & currentType == OrderType.buy)) 
             {
-                if(currentType == OrderType.sell) //on vend, donc on calcule le rendement. Sinon, on ne fait rien
+                //Step 2 : calcul du rendement
+                currentReturn = SimpleReturn(currentAmount, initAmount);
+                historicOfReturns.Add(currentReturn);
+
+                if(historicOfReturns.Count > 0) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
                 {
-                    //Step 2 : calcul du rendement
-                    totalReturn = SimpleReturn(currentAmount, initAmount);
-                    historicOfReturns.Add(totalReturn);
+                    expectedReturn = EReturn(historicOfReturns);
 
-                    if(historicOfReturns.Count > 0) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
+                    if(currentReturn > 0) //alors on retourne le totalGain et le meanGain
                     {
-                        expectedReturn = EReturn(historicOfReturns);
-
-                        if(totalReturn > 0) //alors on retourne le totalGain et le meanGain
-                        {
-                            totalGain = TGain(historicOfReturns);
-                            meanGain = MGain(historicOfReturns, totalGain);
-                        }
-                        else{ //alors on retourne le totalLoss et le meanLoss
-                            totalLoss = TLoss(historicOfReturns);
-                            meanLoss = MLoss(historicOfReturns, totalLoss);
-                        }
-                    }else{
-                        expectedReturn = totalReturn;
+                        totalGain = TGain(historicOfReturns);
+                        meanGain = MGain(historicOfReturns, totalGain);
+                    }else{ //alors on retourne le totalLoss et le meanLoss
+                        totalLoss = TLoss(historicOfReturns);
+                        meanLoss = MLoss(historicOfReturns, totalLoss);
                     }
+
+                    variance = Var(historicOfReturns, expectedReturn);
+                    SD = (float)Math.Sqrt(variance);
+                    historicalVaR95 = HVaR95(historicOfReturns);
+                    historicalVaR99 = HVaR99(historicOfReturns);
+
                 }
-            }
-            else
-            {
-                if (currentType == OrderType.buy) //on achète, donc on calcule le rendement. Sinon, on ne fait rien
-                {
-                    //Step 2 : calcul du rendement
-                    totalReturn = SimpleReturn(currentAmount, initAmount);
-                    historicOfReturns.Add(totalReturn);
-
-                    if (historicOfReturns.Count > 0)
-                    {
-                        expectedReturn = EReturn(historicOfReturns);
-
-                        if (totalReturn > 0) //alors on retourne le totalGain et le meanGain
-                        {
-                            totalGain = TGain(historicOfReturns);
-                            meanGain = MGain(historicOfReturns, totalGain);
-
-                        }
-                        else
-                        { //alors on retourne le totalLoss et le meanLoss
-                            totalLoss = TLoss(historicOfReturns);
-                            meanLoss = MLoss(historicOfReturns, totalLoss);
-                        }
-                    }else{
-                        expectedReturn = totalReturn;
-                    }
+                else{
+                    expectedReturn = currentReturn;
+                    variance = 0;
+                    SD = 0;
                 }
             }
             actualQuantity += executed.Quantity; //on update la quantité
@@ -224,11 +211,7 @@ namespace TradeSoft.Services
             return mean;
         }
 
-
-
-
         //Calculation of maximum Drawdown (see definition at the end) 
-        //      A REVOIR !
         public float Drawdown(List<float> returns)
         {
             float sumOfFollowingLoss = 0;
@@ -248,11 +231,43 @@ namespace TradeSoft.Services
             }
             return drawdown;
         }
+ 
+        public float Var(List<float> returns, float mean)
+        {
+            float sustraction;
+            float sum = 0;
+            for (int i = 0; i < returns.Count; i++)
+            {
+                sustraction = returns[i] - mean;
+                sum += sustraction * sustraction;
+            }
+            return sum/returns.Count;
+        }
+
+        public float HVaR95(List<float> returns)
+        {
+            returns.Sort();
+            float confidenceLevel = 0.05f;
+            int index = (int)Math.Floor(confidenceLevel * returns.Count);
+            return returns[index];
+        }
+
+        public float HVaR99(List<float> returns)
+        {
+            returns.Sort();
+            float confidenceLevel = 0.01f;
+            int index = (int)Math.Floor(confidenceLevel * returns.Count);
+            return returns[index];
+        }
+
+
+
+
 
         override
         public String ToString()
         {
-            return String.Format("totalReturn: {0}, expectedReturn: {1}, totalLoss: {2}, meanLoss: {3}, totalGain: {4}, meanGain: {5}", totalReturn, expectedReturn, totalLoss, meanLoss, totalGain, meanGain);
+            return String.Format("currentReturn: {0}, expectedReturn: {1}, totalLoss: {2}, meanLoss: {3}, totalGain: {4}, meanGain: {5}", currentReturn, expectedReturn, totalLoss, meanLoss, totalGain, meanGain);
         }
 
         /*
