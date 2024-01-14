@@ -121,8 +121,8 @@ namespace TradeSoft.Services
 
                     variance = Var(historicOfReturns, expectedReturn);
                     SD = (float)Math.Sqrt(variance);
-                    historicalVaR95 = HVaR95(historicOfReturns);
-                    historicalVaR99 = HVaR99(historicOfReturns);
+                    historicalVaR95 = HVaR95(historicOfReturns) / initAmount * 100; //en pourcentage par rapport au portefeuille de base
+                    historicalVaR99 = HVaR99(historicOfReturns) / initAmount * 100;
 
                 }
                 else{
