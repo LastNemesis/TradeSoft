@@ -38,10 +38,8 @@ namespace TradeSoft.Services
 {
     public class Analysis
     {
-        private float initAmount = 10000.0f; //monant initial du portfilio, pour tester simplement on le met à 10 000
-        private float currentAmount = 10000.0f; //au début le current amount = init amount 
-
-        // --> il faudra creer un constructeur de la classe qui permet d'initialiser les valeur de initAmount et de currentAmount, mais pour le moment je ne le fais pas
+        private float initAmount; //monant initial du portfilio
+        private float currentAmount;
 
         private float actualQuantity = 0; //c'est la variable qui va accumuler les quantité pour qu'on puisse connaitre la position, et donc à quel moment on doit calculer le rendement.
 
@@ -49,8 +47,9 @@ namespace TradeSoft.Services
 
         /*          About return            */
 
-        private float currentReturn;
-        private float expectedReturn; //expected return per transaction
+        private float currentTotalReturn; //c'est un %, return par rapport au montant initial
+        private float currentReturn; // par rapport à l'état précédant (montant précédant) (%)
+        private float expectedReturn; //expected return per transaction (%)
 
         //Variable storing the amount of the total losses over all the period (do not taking gains into account)
         private float totalLoss;
@@ -70,6 +69,7 @@ namespace TradeSoft.Services
         private ExecutionData executed;
 
         List<float> historicOfReturns = new List<float>();
+        Dictionary<float, float> historicReturns = new Dictionary<float, float>(); //key = current amount, value = poucentage of return compare to previous amount
 
         /*          About risk            */
 
@@ -78,6 +78,12 @@ namespace TradeSoft.Services
         private float historicalVaR95;
         private float historicalVaR99;
 
+        /*          Constructor            */
+        public Analysis(float initAmount)
+        {
+            this.initAmount = initAmount;
+            currentAmount = initAmount;
+        }
 
 
         /*      Method for calculation      */
@@ -94,7 +100,14 @@ namespace TradeSoft.Services
         public void runMethods() //méthode dans laquelle on appelle les autres méthodes et ou on fait les check pour savoir quoi faire
         {
             currentType = executed.Type;     //je récupère le type, car on en a besoin pour savoir si on doit calculer le rendement ou non
-            currentAmount += executed.Price; //update du montant du portefeuille
+
+            //update du montant du portefeuille
+            if(currentType == OrderType.sell)
+            {
+                currentAmount += executed.Price;
+            }else{
+                currentAmount -= executed.Price;
+            }
 
             /* step 1 : je regarde si la quantité est positive, 
              * si oui, on est en long, donc on calcule le rendement à la prochaine vente
@@ -103,20 +116,28 @@ namespace TradeSoft.Services
             if ((actualQuantity >= 0 & currentType == OrderType.sell) || (actualQuantity < 0 & currentType == OrderType.buy)) 
             {
                 //Step 2 : calcul du rendement
-                currentReturn = SimpleReturn(currentAmount, initAmount);
-                historicOfReturns.Add(currentReturn);
+                currentTotalReturn = SimpleReturn(currentAmount, initAmount);
 
-                if(historicOfReturns.Count > 0) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
+                if (historicReturns.Count == 0)
                 {
-                    expectedReturn = EReturn(historicOfReturns);
+                    currentReturn = currentTotalReturn;
+                    historicReturns.Add(currentAmount, currentReturn);
+                }else{
+                    currentReturn = SimpleReturn(currentAmount, historicReturns.Keys.Last()); //historicReturns.Keys.Last()
+                    historicReturns.Add(currentAmount, currentReturn);
+                }
 
-                    if(currentReturn > 0) //alors on retourne le totalGain et le meanGain
+                if(historicReturns.Count > 1) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
+                {
+                    expectedReturn = EReturn(historicReturns);
+
+                    if(currentTotalReturn > 0) //alors on retourne le totalGain et le meanGain
                     {
                         totalGain = TGain(historicOfReturns);
-                        meanGain = MGain(historicOfReturns, totalGain);
+                        meanGain = MGain(historicReturns);
                     }else{ //alors on retourne le totalLoss et le meanLoss
                         totalLoss = TLoss(historicOfReturns);
-                        meanLoss = MLoss(historicOfReturns, totalLoss);
+                        meanLoss = MLoss(historicReturns);
                     }
 
                     variance = Var(historicOfReturns, expectedReturn);
@@ -126,7 +147,7 @@ namespace TradeSoft.Services
 
                 }
                 else{
-                    expectedReturn = currentReturn;
+                    expectedReturn = currentTotalReturn;
                     variance = 0;
                     SD = 0;
                 }
@@ -134,23 +155,24 @@ namespace TradeSoft.Services
             actualQuantity += executed.Quantity; //on update la quantité
         }
 
-        public float SimpleReturn(float a, float b)
+        public float SimpleReturn(float current, float init)
         {
             float simpleReturn;
-            simpleReturn = (a - b) / b * 100;
+            simpleReturn = (current - init) / init * 100;
             return simpleReturn;
         }
 
         // Calculation of the Expected Return
-        public float EReturn(List<float> listOfReturns)
+        public float EReturn(Dictionary<float, float> dicoReturns)
         {
             float sum = 0;
-            for(int i = 0; i < listOfReturns.Count; i++)
+
+            foreach (float simpleReturn in dicoReturns.Values)
             {
-                sum += listOfReturns[i];
+                sum += simpleReturn;
             }
-            
-            expectedReturn = sum / listOfReturns.Count;
+
+            expectedReturn = sum / dicoReturns.Count;
             return expectedReturn;
         }
 
@@ -168,18 +190,22 @@ namespace TradeSoft.Services
         }
 
         //Calculate the mean of loss, when return is a loss
-        public float MLoss(List<float> returns, float sumOfLoss)
+        public float MLoss(Dictionary<float, float> dicoReturns)
         {
             //Counting the number of loss
             int numberOfLoss = 0;
-            foreach (float r in returns)
+            float sumOfLosses = 0f;
+            foreach (float returns in dicoReturns.Values)
             {
-                if (r < 0)
+                if (returns < 0)
+                {
                     numberOfLoss++;
+                    sumOfLosses += returns;
+                }
             }
 
             //Caluculating mean of losses
-            float mean = sumOfLoss / numberOfLoss;
+            float mean = sumOfLosses / numberOfLoss;
             return mean;
         }
 
@@ -196,18 +222,22 @@ namespace TradeSoft.Services
         }
 
         //Calculation of mean gain (from only positive return)
-        public float MGain(List<float> returns, float sumOfGain)
+        public float MGain(Dictionary<float, float> dicoReturns)
         {
-            //Counting the number of gain
-            int numberOfGain = 0;
-            foreach (float r in returns)
+            //Counting the number of loss
+            int numberOfLoss = 0;
+            float sumOfLosses = 0f;
+            foreach (float returns in dicoReturns.Values)
             {
-                if (r > 0)
-                    numberOfGain++;
+                if (returns >= 0)
+                {
+                    numberOfLoss++;
+                    sumOfLosses += returns;
+                }
             }
 
-            //Caluculating mean of gain
-            float mean = sumOfGain / numberOfGain;
+            //Caluculating mean of losses
+            float mean = sumOfLosses / numberOfLoss;
             return mean;
         }
 
@@ -267,7 +297,7 @@ namespace TradeSoft.Services
         override
         public String ToString()
         {
-            return String.Format("currentReturn: {0}, expectedReturn: {1}, totalLoss: {2}, meanLoss: {3}, totalGain: {4}, meanGain: {5}", currentReturn, expectedReturn, totalLoss, meanLoss, totalGain, meanGain);
+            return String.Format("currentTotalReturn: {0}, expectedReturn: {1}, totalLoss: {2}, meanLoss: {3}, totalGain: {4}, meanGain: {5}", currentTotalReturn, expectedReturn, totalLoss, meanLoss, totalGain, meanGain);
         }
 
         /*

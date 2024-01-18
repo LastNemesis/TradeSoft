@@ -22,7 +22,7 @@ namespace TradeSoft.Tests.AnalyserTest
         public AnalyserTest()
         {
             //sut
-            _analysis = new Analysis();
+            _analysis = new Analysis(10000f);
         }
 
         [Fact]
@@ -59,12 +59,14 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_EReturn_ShouldCalculateExpectedReturn()
         {
             //Arrange - get variable, classes, ... to test
-            List<float> allReturns = new (){ 1.0f, 2.0f, 3.0f, 4.0f };
-            float totalReturn = 1.0f + 2.0f + 3.0f + 4.0f;
-            float expectedReturn = totalReturn / allReturns.Count;
+            Dictionary<float, float> dicoReturns = new Dictionary<float, float> {{ 80, -20 },
+                                                                                 { 70, -12.5f},
+                                                                                 { 90, 28.5f}};
+            float totalReturn = -20 - 12.5f + 28.5f;
+            float expectedReturn = totalReturn / dicoReturns.Count;
 
             //Act - run the méthode to test
-            float result = _analysis.EReturn(allReturns);
+            float result = _analysis.EReturn(dicoReturns);
 
             //Assert - Waht it should return
             result.Should().Be(expectedReturn);
@@ -88,13 +90,18 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_MLoss_ShouldValueOfMeanLossFromListOfReturns()
         {
             //Arrange - get variable, classes, ... to test
-            List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f};
-            float totalLoss = (-2.0f - 1.0f - 3.0f);
+            //List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f};
+            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
+                                                                                 { 70, -12.5f},
+                                                                                 { 90, 28.5f},
+                                                                                 { 95, 5.56f},
+                                                                                 { 92, -3.16f}};
+            float totalLoss = (-20f - 12.5f - 3.16f);
             int nbLoss = 3;
             float meanLoss = totalLoss / nbLoss;
 
             //Act - run the méthode to test
-            float result = _analysis.MLoss(allReturns, totalLoss);
+            float result = _analysis.MLoss(dicoReturns);
 
             //Assert - Waht it should return
             result.Should().Be(meanLoss);
@@ -118,13 +125,18 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_MGain_ShouldValueOfMeanGainFromListOfReturns()
         {
             //Arrange - get variable, classes, ... to test
-            List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f };
-            float totalGain = (1.0f + 3.0f + 4.0f + 4.0f);
-            int nbGain = 4;
+            //List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f };
+            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
+                                                                                 { 70, -12.5f},
+                                                                                 { 90, 28.5f},
+                                                                                 { 95, 5.56f},
+                                                                                 { 92, -3.16f}};
+            float totalGain = (28.5f + 5.56f);
+            int nbGain = 2;
             float meanGain = totalGain / nbGain;
 
             //Act - run the méthode to test
-            float result = _analysis.MGain(allReturns, totalGain);
+            float result = _analysis.MGain(dicoReturns);
 
             //Assert - Waht it should return
             result.Should().Be(meanGain);
