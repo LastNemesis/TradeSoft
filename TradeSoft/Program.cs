@@ -11,20 +11,20 @@ namespace Main
     {
         static void Main(string[] args)
         {
-            // Getting the path of the CSV
-            string filePath1 = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-sample.csv");
+            /// Getting the path of the CSV
+            string filePath = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-sample.csv");
 
-            // Creating the dataService Object
-            DataService dataService = new DataService();
+            // Timeframe wanted (HH, MM, SS)
+            TimeSpan timeSpan = new TimeSpan(0, 0, 1);
+
+            // Creating the dataService Object with a time span of 1 second
+            DataService dataService = new DataService(timeSpan);
 
             // Getting the Raw Data
             List<Tick> tickList = dataService.FetchData(filePath1);
 
             // Displaying the number of lines
             Console.WriteLine(tickList.Count);
-
-            // Timeframe wanted (HH, MM, SS)
-            TimeSpan timeSpan = new TimeSpan(0, 0, 1);
 
             // Resampling the Raw Data
             List<Tick> resampledTickList = dataService.ResampleData(tickList, timeSpan);
