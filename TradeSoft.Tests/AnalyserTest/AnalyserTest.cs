@@ -40,21 +40,6 @@ namespace TradeSoft.Tests.AnalyserTest
             result.Should().Be(expectedSimpleReturn);
         }
 
-
-        /*[Fact]
-        public void Analysis_TReturn_ShouldCalculateTotalReturnFromListOfReturns()
-        {
-            //Arrange - get variable, classes, ... to test
-            List<float> allReturns = new (){ 1.0f, 2.0f, 3.0f, 4.0f };
-            float expectedSum = 1.0f + 2.0f + 3.0f + 4.0f;
-
-            //Act - run the méthode to test
-            float result = _analysis.TReturn(allReturns);
-
-            //Assert - Waht it should return
-            result.Should().Be(expectedSum);
-        }*/
-
         [Fact]
         public void Analysis_EReturn_ShouldCalculateExpectedReturn()
         {
@@ -70,20 +55,6 @@ namespace TradeSoft.Tests.AnalyserTest
 
             //Assert - Waht it should return
             result.Should().Be(expectedReturn);
-        }
-
-        [Fact]
-        public void Analysis_TLoss_ShouldSumAllNegativeReturnsFromListOfReturns()
-        {
-            //Arrange - get variable, classes, ... to test
-            List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f};
-            float totalLoss = (-2.0f - 1.0f);
-
-            //Act - run the méthode to test
-            float result = _analysis.TLoss(allReturns);
-
-            //Assert - Waht it should return
-            result.Should().Be(totalLoss);
         }
 
         [Fact]
@@ -105,20 +76,6 @@ namespace TradeSoft.Tests.AnalyserTest
 
             //Assert - Waht it should return
             result.Should().Be(meanLoss);
-        }
-
-        [Fact]
-        public void Analysis_TGain_ShouldSumAllPositiveReturnsFromListOfReturns()
-        {
-            //Arrange - get variable, classes, ... to test
-            List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f };
-            float totalGain = (1.0f + 3.0f + 4.0f);
-
-            //Act - run the méthode to test
-            float result = _analysis.TGain(allReturns);
-
-            //Assert - Waht it should return
-            result.Should().Be(totalGain);
         }
 
         [Fact]
@@ -160,16 +117,44 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_Var_ShouldReturnVariance()
         {
             //Arrange - get variable, classes, ... to test
-            List<float> allReturns = new() { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f};
-            float mean = (1.0f - 2.0f + 3.0f + 4.0f - 1.0f + 4.0f)/6;
-            float variance = (0.25f + 12.25f + 2.25f + 6.25f + 6.25f + 6.25f)/6;
+            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
+                                                                                 { 70, -12.5f},
+                                                                                 { 90, 28.5f},
+                                                                                 { 95, 5.56f},
+                                                                                 { 92, -3.16f}};
+            float mean = (-20f - 12.5f + 28.5f + 5.56f - 3.16f) / 5; //-0,32
+            float variance = (387.3024f + 148.3524f + 830.5924f + 34.5744f + 8.0656f) / 5f;
 
             //Act - run the méthode to test
-            float result = _analysis.Var(allReturns, mean);
+            float result = _analysis.Var(dicoReturns, mean);
 
             //Assert - Waht it should return
             result.Should().Be(variance);
         }
+
+        [Fact]
+        public void Analysis_Expectancy_ShouldReturnExpectancy()
+        {
+            //Arrange - get variable, classes, ... to test
+            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
+                                                                                 { 70, -12.5f},
+                                                                                 { 90, 28.5f},
+                                                                                 { 95, 5.56f},
+                                                                                 { 92, -3.16f}};
+            float meanGain = 17.03f;
+            float meanLoss = -11.87f;
+            float expectancy = -(meanGain * 0.4f + meanLoss * 0.6f) / meanLoss;
+
+
+            //Act - run the méthode to test
+            float result = _analysis.Expectancy(dicoReturns, meanGain, meanLoss);
+
+            //Assert - Waht it should return
+            result.Should().Be(expectancy);
+        }
+
+
+
 
         [Fact]
         public void Analysis_HVaR95_ShouldCalculateValueAtRiskAt95Percent()
@@ -184,5 +169,53 @@ namespace TradeSoft.Tests.AnalyserTest
             //Assert - Waht it should return
             result.Should().Be(VaR);
         }
+
+
+
+
+
+
+
+        /*[Fact]
+public void Analysis_TReturn_ShouldCalculateTotalReturnFromListOfReturns()
+{
+    //Arrange - get variable, classes, ... to test
+    List<float> allReturns = new (){ 1.0f, 2.0f, 3.0f, 4.0f };
+    float expectedSum = 1.0f + 2.0f + 3.0f + 4.0f;
+
+    //Act - run the méthode to test
+    float result = _analysis.TReturn(allReturns);
+
+    //Assert - Waht it should return
+    result.Should().Be(expectedSum);
+}
+
+        [Fact]
+        public void Analysis_TLoss_ShouldSumAllNegativeReturnsFromListOfReturns()
+        {
+            //Arrange - get variable, classes, ... to test
+            List<float> allReturns = new() { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f };
+            float totalLoss = (-2.0f - 1.0f);
+
+            //Act - run the méthode to test
+            float result = _analysis.TLoss(allReturns);
+
+            //Assert - Waht it should return
+            result.Should().Be(totalLoss);
+        }
+
+        [Fact]
+        public void Analysis_TGain_ShouldSumAllPositiveReturnsFromListOfReturns()
+        {
+            //Arrange - get variable, classes, ... to test
+            List<float> allReturns = new() { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f };
+            float totalGain = (1.0f + 3.0f + 4.0f);
+
+            //Act - run the méthode to test
+            float result = _analysis.TGain(allReturns);
+
+            //Assert - Waht it should return
+            result.Should().Be(totalGain);
+        }*/
     }
 }
