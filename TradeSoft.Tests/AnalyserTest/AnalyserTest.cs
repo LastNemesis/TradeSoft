@@ -171,6 +171,29 @@ namespace TradeSoft.Tests.AnalyserTest
         }
 
 
+        [Fact]
+        public void Analysis_SharpRatio_ShouldCalculateFloat() //Return a percentage
+        {
+            //Arrange
+            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
+                                                                                 { 70f, -12.5f},
+                                                                                 { 90f, 28.5f},
+                                                                                 { 95f, 5.56f},
+                                                                                 { 92f, -3.16f}};
+            float mean = (-20f - 12.5f + 28.5f + 5.56f - 3.16f) / 5f; //-0,32
+            float variance = (387.3024f + 148.3524f + 830.5924f + 34.5744f + 8.0656f) / 5f;
+            float stDeviation = (float)Math.Sqrt(variance);
+            //rf = risk free return
+            float rf = 3.876f;
+            float result = (mean - rf) / stDeviation;
+
+            //Act - Run the method
+            float sharpRatio = _analysis.SharpRatio(mean, stDeviation);
+
+            //Assert 
+            result.Should().Be(sharpRatio);
+        }
+
 
 
 

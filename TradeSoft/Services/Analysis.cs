@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -15,8 +16,8 @@ using TradeSoft.Models;
  * --> rappeler que le module est appelé à chaque executionData from broker
  * 
  * --> liste de rendements pour le retourner à la fin 
- * --> expected return on va le garder et l'update, il sera calculer à partir des veleur du ExecuteData actuelle
- * et des rendement précédants stockés dans la liste, de sorte que le trader puissent voir la moyennede rendement
+ * --> expected return on va le garder et l'update, il sera calculer à partir des valeurs du ExecuteData actuelle
+ * et des rendements précédants stockés dans la liste, de sorte que le trader puissent voir la moyennede rendement
  * qu'il produit avec sa stratégie à tout moment.
  * 
  * Récupération du rendement: (ça normalement c'est fait)
@@ -49,6 +50,10 @@ namespace TradeSoft.Services
         private float currentReturn; // par rapport à l'état précédant (montant précédant) (%)
         private float expectedReturn; //expected return per transaction (%)
 
+        //Initialisation of an internal clock to get the average time of an open position to be close
+        Stopwatch sw = new Stopwatch();
+        List<TimeSpan> openPositionTimes = new List<TimeSpan>();
+
         //Variable storing the amount of the total losses over all the period (do not taking gains into account)
         //private float totalLoss;
 
@@ -75,6 +80,7 @@ namespace TradeSoft.Services
 
         //private float variance;
         private float volatility;       //standard deviation
+        private float sharpRatio;       //My portfolio execess returns per unit of the portfolio total risk Bigger is better 
         private float expectancy;
         private float SQN;              //System Quality Number
         private float historicalVaR95;
@@ -101,11 +107,17 @@ namespace TradeSoft.Services
 
         public void runMethods() //méthode dans laquelle on appelle les autres méthodes et ou on fait les check pour savoir quoi faire
         {
-            currentType = executed.Type;     //je récupère le type, car on en a besoin pour savoir si on doit calculer le rendement ou non
+            //Start my inerClock when we take a position
+            if (actualQuantity == 0)
+            {
+                sw.Start();
+            }
 
+            currentType = executed.Type;     //je récupère le type, car on en a besoin pour savoir si on doit calculer le rendement ou non
+            
             //update amount of portfolio
             currentAmount += executed.Price * executed.Quantity; //pas besoin de vérifier si c'est un sell ou un buy car la qunatité est négative en cas de sell donc le prix sera négatif
-
+ 
             /* step 1 : je regarde si la quantité est positive, 
              * si oui, on est en long, donc on calcule le rendement à la prochaine vente
              * si non, on est en short, donc on calcule le rendement au prochain buy 
@@ -136,6 +148,7 @@ namespace TradeSoft.Services
 
                     //Step 3 : Risk measurement
                     volatility = (float)Math.Sqrt(Var(historicReturns, expectedReturn));
+                    sharpRatio = SharpRatio(expectedReturn, volatility);
 
                     //Simplifier en faisant 1 seule méthode, et on passe en paramètre le % de précision
                     historicalVaR95 = HVaR95(historicOfReturns) / initAmount * 100; //en pourcentage par rapport au portefeuille de base
@@ -147,6 +160,7 @@ namespace TradeSoft.Services
                     //variance = 0;
                     volatility = 0;
                 }
+
             }
             //Updating best/worst returns if necessary
             if (currentReturn > best)
@@ -156,10 +170,32 @@ namespace TradeSoft.Services
 
             //Calculation of SQN (System Quality Number) used to evaluate the quality of a trading system taking into account both: performance and volatility
             expectancy = Expectancy(historicReturns, meanGain, meanLoss);
+
+            /* If SQN is between:
+             * 1.6 - 1.9 Below average
+             * 2.0 - 2.4 Average
+             * 2.5 - 2.9 Good
+             * 3.0 - 5.0 Excellent
+             * 5.1 - 6.9 Superb
+             * 7.0 - Holy Grail?
+             * SQN is deemed reliable if nbr of trade >= 30
+             */
             SQN = expectancy / volatility * (float)Math.Sqrt(historicReturns.Count);
 
-            actualQuantity += executed.Quantity; //on update la quantité
+            //When the position close meaning when quantity = 0 we stop the clock
+            if ((actualQuantity > 0 && actualQuantity + executed.Quantity < 0) || (actualQuantity < 0 && actualQuantity + executed.Quantity > 0))
+            {
+                sw.Stop();
+                openPositionTimes.Add(sw.Elapsed);
+                sw.Restart();
+            }else if (executed.Quantity + actualQuantity == 0)
+            {
+                sw.Stop();
+                openPositionTimes.Add(sw.Elapsed);
+                sw.Reset();
+            }
 
+            actualQuantity += executed.Quantity; //on update la quantité
         }
 
         public float SimpleReturn(float current, float init)
@@ -244,6 +280,7 @@ namespace TradeSoft.Services
             return drawdown;
         }
 
+        //Computation of the Variance
         public float Var(Dictionary<float, float> dicoReturns, float mean)
         {
             float sustraction;
@@ -258,6 +295,34 @@ namespace TradeSoft.Services
             return sum / dicoReturns.Count;
         }
 
+        //Compute the Sharp Ratio
+        public float SharpRatio(float expectedReturns, float st_deviation)
+        {
+            //rf = Risk free rate, taken from: https://fr.tradingview.com/markets/bonds/prices-france/ the 23/03/2024
+            float rf = 3.876f; //(%)
+
+            float sharp_ratio = (expectedReturns - rf) / st_deviation;
+            return sharp_ratio;
+        }
+
+        //Computation of the Value at Risk using Historical data
+        public float HVaR95(List<float> returns)
+        {
+            returns.Sort();
+            float confidenceLevel = 0.05f;
+            int index = (int)Math.Floor(confidenceLevel * returns.Count);
+            return returns[index];
+        }
+
+        public float HVaR99(List<float> returns)
+        {
+            returns.Sort();
+            float confidenceLevel = 0.01f;
+            int index = (int)Math.Floor(confidenceLevel * returns.Count);
+            return returns[index];
+        }
+
+        //To be able to calculate the System Quality Number (SQN)
         public float Expectancy(Dictionary<float, float> dicoReturns, float meanGain, float meanLoss)
         {
             float gainProbability = 0;
@@ -282,30 +347,17 @@ namespace TradeSoft.Services
             return expectancy;
         }
 
-        public float HVaR95(List<float> returns)
-        {
-            returns.Sort();
-            float confidenceLevel = 0.05f;
-            int index = (int)Math.Floor(confidenceLevel * returns.Count);
-            return returns[index];
-        }
-
-        public float HVaR99(List<float> returns)
-        {
-            returns.Sort();
-            float confidenceLevel = 0.01f;
-            int index = (int)Math.Floor(confidenceLevel * returns.Count);
-            return returns[index];
-        }
-
-
-
-
-
+  
         override
         public String ToString()
         {
-            return String.Format("cumulativeReturn: {0}, expectedReturn: {1}, meanLoss: {2}, meanGain: {3}", cumulativeReturn, expectedReturn, meanLoss, meanGain);
+            TimeSpan Sum = TimeSpan.Zero;
+            foreach(TimeSpan position in openPositionTimes)
+            {
+                Sum += position;
+            }
+            TimeSpan averageTime = TimeSpan.FromTicks(Sum.Ticks / openPositionTimes.Count());
+            return String.Format("cumulativeReturn: {0}, expectedReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, expectedReturn, meanLoss, meanGain, volatility, sharpRatio, averageTime);
         }
 
         /*

@@ -26,7 +26,7 @@ namespace TradeSoft.Models
         // Order price
         private float _price;
 
-        // Could be named size
+        // Could be named size -> + = buy & - = sell
         private float _quantity;
 
         // Buy or sell
