@@ -180,7 +180,7 @@ namespace TradeSoft.Services
             {
                 if (i > 0) //because according to the formula of simple return, there is no return for the first value
                 {
-                    simpleReturn = SimpleReturn(orders[i].EData.Price, orders[i - 1].EData.Price);
+                    simpleReturn = SimpleReturn(orders[i].ExecutionData.Price, orders[i - 1].ExecutionData.Price);
                     allSimpleReturns.Add(simpleReturn);
                 }
             }
@@ -221,10 +221,10 @@ namespace TradeSoft.Services
             //Find min and max values
             foreach (Order order in orders)
             {
-                if (order.EData.Price < minPrice)
-                    minPrice = order.EData.Price;
-                if (order.EData.Price > maxPrice)
-                    maxPrice = order.EData.Price;
+                if (order.ExecutionData.Price < minPrice)
+                    minPrice = order.ExecutionData.Price;
+                if (order.ExecutionData.Price > maxPrice)
+                    maxPrice = order.ExecutionData.Price;
             }
 
             drawDown = maxPrice - minPrice;
@@ -245,10 +245,10 @@ namespace TradeSoft.Services
                     continue;
                 else
                 {
-                    if (orders[i].EData.Price < orders[i-1].EData.Price)
+                    if (orders[i].ExecutionData.Price < orders[i-1].ExecutionData.Price)
                     {
                         isDecreasing = true;
-                        maxPrice = orders[i-1].EData.Price;
+                        maxPrice = orders[i-1].ExecutionData.Price;
 
                         //checking if it continues to decreas so that we can obtain the lowest price.
                         do
@@ -256,13 +256,13 @@ namespace TradeSoft.Services
                             if (i < orders.Length)
                             {
                                 i++;
-                                if (orders[i].EData.Price > orders[i - 1].EData.Price)
+                                if (orders[i].ExecutionData.Price > orders[i - 1].ExecutionData.Price)
                                     isDecreasing = false;
                             }
                             else
                                 isDecreasing = false;
 
-                            minPrice = orders[i].EData.Price;
+                            minPrice = orders[i].ExecutionData.Price;
 
                         }while (isDecreasing);
 

@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TradeSoft.Models
+﻿namespace TradeSoft.Models
 {
-    public class ExecutionData
+    public class ExecutionBit
     {
+        // Order price
+        private float _price;
 
         // Could be named "Size"
         private float _quantity;
@@ -17,6 +12,11 @@ namespace TradeSoft.Models
         private DateTime _dt;
 
         //properties : getters and setters for each field
+        public float Price
+        {
+            get { return _price; }
+            set { _price = value; }
+        }
 
         public float Quantity
         {
@@ -29,8 +29,10 @@ namespace TradeSoft.Models
             set { _dt = DateTime.Now; }
         }
 
-        public ExecutionData(float quantity, DateTime dt)
+        public ExecutionBit(float price, float quantity, DateTime dt)
         {
+            _price = price;
+
             _quantity = quantity;
 
             _dt = dt;

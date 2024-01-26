@@ -9,7 +9,7 @@ namespace TradeSoft.Services
         {
             Logger logger = new Logger("/Logs/log.txt");
             Broker broker = new Broker(logger);
-            StrategyHandler strategyHandler = new StrategyHandler(broker, logger);
+            StrategyHandler strategyHandler = new StrategyHandler(broker);
 
             foreach(Tick tick in dataService.ticks())
             {

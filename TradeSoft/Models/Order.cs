@@ -35,6 +35,8 @@ namespace TradeSoft.Models
         // Could be named size
         private float _quantity;
 
+        private List<ExecutionBit> _executionBits = new List<ExecutionBit>();
+
         // Buy or sell
         private OrderType _type;
 
@@ -77,10 +79,16 @@ namespace TradeSoft.Models
             set { _dt = value; }
         }
 
-        public ExecutionData EData
+        public ExecutionData ExecutionData
         {
             get { return _executionData; }
             set { _executionData = value; }
+        }
+
+        public List<ExecutionBit> ExecutionBits
+        {
+            get { return _executionBits;  }
+            set { _executionBits = value; }
         }
 
         public OrderStatus Status
@@ -99,6 +107,15 @@ namespace TradeSoft.Models
             _quantity = quantity;
             _type = type;
             _dt = dt;
+        }
+
+        public void updateExecution(ExecutionBit executionBit)
+        {
+            _executionData.Quantity += executionBit.Quantity;
+
+            if(_executionData.Quantity == _quantity) {
+                _status = OrderStatus.completed;
+            }
         }
 
         public override string ToString()

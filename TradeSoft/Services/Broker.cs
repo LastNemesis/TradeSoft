@@ -39,8 +39,8 @@ namespace TradeSoft.Services
         public void Sell(Order order) {
             logger.LogOrder(order);
             Console.WriteLine(order.ToString());
-            ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
-            order.EData = EData;
+            ExecutionBit executionBit = new ExecutionBit(order.Price, order.Quantity, DateTime.Now);
+            order.updateExecution(executionBit);
 
             ApplyOrder(order);
         }
@@ -49,8 +49,8 @@ namespace TradeSoft.Services
         public void Buy(Order order) {
             logger.LogOrder(order);
             Console.WriteLine(order.ToString());
-            ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
-            order.EData = EData;
+            ExecutionBit executionBit = new ExecutionBit(order.Price, order.Quantity, DateTime.Now);
+            order.updateExecution(executionBit);
 
             ApplyOrder(order);
         }
