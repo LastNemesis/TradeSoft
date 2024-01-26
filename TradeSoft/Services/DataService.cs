@@ -12,6 +12,16 @@ namespace TradeSoft.Services
 {
     public class DataService
     {
+        public List<Tick>? listTicks;
+        public IEnumerable<Tick> ticks()
+        {
+            List<Tick> ticks = new List<Tick>();
+            foreach (var tick in ticks)
+            {
+                yield return tick;
+            }
+        }
+
         public List<Tick> FetchData(string filePath)
         {
             // Creating the list of ticks

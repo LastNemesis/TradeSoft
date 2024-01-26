@@ -15,9 +15,10 @@ namespace TradeSoft.Services
     {
         private List<Strategy> _strategies = new List<Strategy>();
 
-        public StrategyHandler()
+        public StrategyHandler(Broker broker)
         {
             LoadStrategies();
+            SetBroker(broker);
         }
 
         public void LoadStrategies()
@@ -58,7 +59,7 @@ namespace TradeSoft.Services
             }
         }
 
-        public void SetBrocker(Broker broker)
+        public void SetBroker(Broker broker)
         {
             if (_strategies == null)
             {
