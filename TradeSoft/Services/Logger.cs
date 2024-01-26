@@ -32,6 +32,12 @@ namespace TradeSoft.Services
             WriteToFile(logMessage);
         }
 
+        public void LogAnalysis(Order order, String analysis)
+        {
+            string logMessage = $"Analysis: Strategy: {order.StratId}, OrderId: {order.OrderId} {analysis}";
+            WriteToFile(logMessage);
+        }
+
         private void WriteToFile(string message)
         {
             try

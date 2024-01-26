@@ -91,5 +91,17 @@ namespace TradeSoft.Services
                 }
             }
         }
+
+        public List<int> GetStrategiesId()
+        {
+            List<int> ids = new List<int>();
+
+            foreach (Strategy strategy in _strategies)
+            {
+                ids.Add(strategy.Id);
+            }
+
+            return ids;
+        }
     }
 }

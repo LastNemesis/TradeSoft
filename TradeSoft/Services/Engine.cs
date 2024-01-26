@@ -10,6 +10,7 @@ namespace TradeSoft.Services
             Logger logger = new Logger("/Logs/log.txt");
             Broker broker = new Broker(logger);
             StrategyHandler strategyHandler = new StrategyHandler(broker);
+            AnalysisHandler analysisHandler = new AnalysisHandler(strategyHandler.GetStrategiesId(), logger);
 
             foreach(Tick tick in dataService.ticks())
             {
@@ -20,28 +21,14 @@ namespace TradeSoft.Services
 
 
                 List<Order> tickOrders = broker.GetTickOrders();
-                strategyHandler.NotifyStrategies(tickOrders);
 
-                Console.WriteLine("\n");
+                analysisHandler.analyseExecutionBits(tickOrders);
+                strategyHandler.NotifyStrategies(tickOrders);
             }
 
             //define how we use the ticks to have access to the last tick
             //maybe Strategies directly get market price from Broker in Close method ?
             strategyHandler.CloseStrategies(dataService.listTicks[^1]);
-
-            List<Order> orders = broker.GetAllOrders();
-            foreach(Order order in orders)
-            {
-                Console.WriteLine(order.ToString());
-            }
-            Console.WriteLine(orders.Count);
-            //send orders to strategies
-
-            //log results: orders/ticks/analysis results
-            Analysis riskAnalysis = new Analysis();
-            riskAnalysis.runMethods(orders);
-
-            Console.WriteLine(riskAnalysis.ToString());
         }
     }
 }
