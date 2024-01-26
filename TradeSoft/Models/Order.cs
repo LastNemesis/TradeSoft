@@ -38,6 +38,9 @@ namespace TradeSoft.Models
         // Buy or sell
         private OrderType _type;
 
+        // Status of the Order Completion
+        private OrderStatus _status;
+
         // Order time-stamp
         private DateTime _dt;
 
@@ -78,6 +81,12 @@ namespace TradeSoft.Models
         {
             get { return _executionData; }
             set { _executionData = value; }
+        }
+
+        public OrderStatus Status
+        {
+            get { return _status; }
+            set { _status = value; }
         }
 
         public Order(int stratId, float price, float quantity, OrderType type, DateTime dt)

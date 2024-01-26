@@ -7,19 +7,21 @@ namespace TradeSoft.Services
     {
         public void Run(DataService dataService)
         {
-            Broker broker = new Broker();
-            StrategyHandler strategyHandler = new StrategyHandler(broker);
+            Logger logger = new Logger("/Logs/log.txt");
+            Broker broker = new Broker(logger);
+            StrategyHandler strategyHandler = new StrategyHandler(broker, logger);
 
             foreach(Tick tick in dataService.ticks())
             {
                 Console.WriteLine(tick.ToString());
+                logger.LogTick(tick);
                 broker.simulateTick(tick);
-                strategyHandler.SendTick(tick); //to be made async ?
+                strategyHandler.SendTick(tick);
 
-                //wait until next tick ? using Clock ?
 
                 List<Order> tickOrders = broker.GetTickOrders();
                 strategyHandler.NotifyStrategies(tickOrders);
+
                 Console.WriteLine("\n");
             }
 

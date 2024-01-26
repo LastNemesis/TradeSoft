@@ -21,13 +21,14 @@ namespace TradeSoft.Services
 
         public void LogOrder(Order order)
         {
-            string logMessage = $"Order: Strategy ID: {order.Strat_ID}, Price: {order.Price}, Quantity: {order.Quantity}, DateTime: {order.DateTime}";
+            string logMessage = $"Order: OrderId: {order.OrderId}, StrategyId: {order.StratId}, Price: {order.Price}, Quantity: {order.Quantity}, DateTime: {order.DT}";
             WriteToFile(logMessage);
         }
 
-        public void LogExecutedOrder(ExecutionData executionData)
+        public void LogExecutedOrder(Order order)
         {
-            string logMessage = $"Executed Order: Status: {executionData.Status}, Price: {executionData.Price}, Quantity: {executionData.Quantity}, DateTime: {executionData.DateTime}";
+            ExecutionData executionData = order.EData;
+            string logMessage = $"Executed Order: OrderId: {order.OrderId}, Status: {order.Status}, Price: {executionData.Price}, Quantity: {executionData.Quantity}, DateTime: {executionData.DT}";
             WriteToFile(logMessage);
         }
 

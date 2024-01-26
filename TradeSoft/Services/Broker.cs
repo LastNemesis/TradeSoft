@@ -21,6 +21,12 @@ namespace TradeSoft.Services
 
         //store the marketPrice for the current Tick of execution
         private float _marketPrice = 0f;
+        private Logger logger;
+
+        public Broker(Logger logger)
+        {
+            this.logger = logger;
+        }
 
         //called each tick to simulate the new Tick of execution to update market values
         public void simulateTick(Tick tick)
@@ -31,6 +37,7 @@ namespace TradeSoft.Services
 
         //called in the case of a Sell order
         public void Sell(Order order) {
+            logger.LogOrder(order);
             Console.WriteLine(order.ToString());
             ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
             order.EData = EData;
@@ -40,6 +47,7 @@ namespace TradeSoft.Services
 
         //called in the case of a Buy order
         public void Buy(Order order) {
+            logger.LogOrder(order);
             Console.WriteLine(order.ToString());
             ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
             order.EData = EData;
@@ -50,7 +58,8 @@ namespace TradeSoft.Services
         //called by Sell and Buy function to update the position and store the applied order
         public void ApplyOrder(Order order)
         {
-            Position position = GetPosition(order.Strat_ID);
+            logger.LogExecutedOrder(order);
+            Position position = GetPosition(order.StratId);
             position.UpdatePosition(order);
 
             _ordersLastTick.Add(order);

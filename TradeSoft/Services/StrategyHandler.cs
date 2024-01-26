@@ -15,6 +15,7 @@ namespace TradeSoft.Services
     {
         private List<Strategy> _strategies = new List<Strategy>();
 
+
         public StrategyHandler(Broker broker)
         {
             LoadStrategies();
@@ -83,7 +84,7 @@ namespace TradeSoft.Services
             {
                 foreach (Strategy strategy in _strategies)
                 {
-                    if(order.Strat_ID == strategy.Id)
+                    if(order.StratId == strategy.Id)
                     {
                         strategy.Notify(order);
                     }
