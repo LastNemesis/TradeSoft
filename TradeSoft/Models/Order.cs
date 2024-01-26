@@ -20,8 +20,14 @@ namespace TradeSoft.Models
      */
     public class Order
     {
-        // Unique identifier of the strategy behind his order
-        private int _strat_ID;
+        // Static field to keep track of the last assigned ID
+        private static int id_counter = 0;
+
+        // Unique identifier of the order
+        private int _orderId;
+
+        // Unique identifier of the strategy behind this order
+        private int _stratId;
 
         // Order price
         private float _price;
@@ -30,7 +36,7 @@ namespace TradeSoft.Models
         private float _quantity;
 
         // Buy or sell
-        private OrderType _type { get; set; }
+        private OrderType _type;
 
         // Order time-stamp
         private DateTime _dt;
@@ -38,12 +44,16 @@ namespace TradeSoft.Models
         // Execution data
         private ExecutionData _executionData;
 
-
-        //All preperties, getter and setter of each field
-        public int Strat_ID
+        // Properties, getters, and setters
+        public int OrderId
         {
-            get { return _strat_ID; }
-            set { _strat_ID = value; }
+            get { return _orderId; }
+        }
+
+        public int StratId
+        {
+            get { return _stratId; }
+            set { _stratId = value; }
         }
 
         public float Price
@@ -57,10 +67,11 @@ namespace TradeSoft.Models
             get { return _quantity; }
             set { _quantity = value; }
         }
+
         public DateTime DT
         {
             get { return _dt; }
-            set { _dt = DateTime.Now; }
+            set { _dt = value; }
         }
 
         public ExecutionData EData
@@ -69,26 +80,21 @@ namespace TradeSoft.Models
             set { _executionData = value; }
         }
 
-
-        override
-        public String ToString()
+        public Order(int stratId, float price, float quantity, OrderType type, DateTime dt)
         {
-            return String.Format("Strategy {0} price: {1} quantity {2}" ,_strat_ID, _price, _quantity);
+            // Assigning a unique order ID
+            _orderId = ++id_counter;
+
+            _stratId = stratId;
+            _price = price;
+            _quantity = quantity;
+            _type = type;
+            _dt = dt;
         }
 
-
-        public Order(int strat_ID, float price, float quantity, OrderType type, DateTime dt)
+        public override string ToString()
         {
-            
-            _strat_ID = strat_ID;
-            
-            _price = price;
-            
-            _quantity = quantity;
-            
-            _type = type;
-            
-            _dt = dt;
+            return $"Order ID: {_orderId}, Strategy ID: {_stratId}, Price: {_price}, Quantity: {_quantity}";
         }
     }
 
