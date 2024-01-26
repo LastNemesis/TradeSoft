@@ -104,4 +104,12 @@ namespace TradeSoft.Models
         buy,
         sell
     }
+
+    public enum OrderStatus
+    {
+        submitted,
+        accepted,
+        partial,
+        completed,
+    }
 }
