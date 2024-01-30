@@ -11,13 +11,15 @@ namespace Main
     {
         static void Main(string[] args)
         {
-            // Getting the path of the CSV
-            string filePath1 = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-sample.csv");
-
             // Creating the dataService Object
             DataService dataService = new DataService();
 
+            dataService.WriteData();
+
+            // Creating the engine Object       
             Engine engine = new Engine();
+
+            // Running the engine with the resampled data
             engine.Run(dataService);
         }
     }

@@ -12,58 +12,202 @@ namespace TradeSoft.Services
 {
     public class DataService
     {
-        public List<Tick>? listTicks;
+        // Defining key variables
+            // Resample Tick List
+        private List<Tick>? processedTickList;
+
+            // Time Variables
+        private DateTime startTime;
+        private TimeSpan timeSpan;
+
+        // Market opening and closing time
+        private TimeSpan marketStartTime = new TimeSpan(9, 0, 0);   // 9:00 AM
+        private TimeSpan marketEndTime = new TimeSpan(18, 0, 0);    // 6:00 PM
+
+        /// Getting the path of the input CSV
+        string filePath_in = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-sample.csv");
+
+        // Getting the path of the output CSV
+        string filePath_out = Path.Combine("..", "..", "..", "..", "TradeSoft", "Resources", "tradesoft-ticks-resample.csv");
+
+        // Constructor
+        public DataService()
+        {
+            // The timespan between each resample tick is defined here
+            this.timeSpan = new TimeSpan(0, 1, 0); ;
+
+            // The resampled tick list
+            this.processedTickList = new List<Tick>();
+
+            // The start time
+            this.startTime = DateTime.MinValue;
+        }
+
+        // Dynamic return tick function
         public IEnumerable<Tick> ticks()
         {
+            // Return list
             List<Tick> ticks = new List<Tick>();
-            foreach (var tick in ticks)
+            
+            // Returning the processd tick when ask for it
+            foreach (var tick in ProcessTick())
             {
-                yield return tick;
+                if (tick != null)
+                {
+                    yield return tick;
+                }
             }
         }
 
-        public List<Tick> FetchData(string filePath)
+        // Static return all ticks function
+        public List<Tick> GetAllProccessedTicks()
         {
-            // Creating the list of ticks
-            List<Tick> tickList = new();
+            // Return list
+            List<Tick>? tickList = new List<Tick>();
 
-            // Loading the CSV file containing the sample market data
-            using (var reader = new StreamReader(filePath))
+            // Getting all the Proccessed Ticks
+            foreach (var tick in ProcessTick())
             {
-
-                // Creating the variable containing a tick, and loading the first line
-                string? line = reader.ReadLine();
-
-                // Creating the loop that reads every line until the last empty line
-                while ((line = reader.ReadLine()) != null)
+                if (tick != null)
                 {
-                    
-                    // Separating the values 
-                    var values = line.Split(',');
-                    
-                    // Getting the date of the tick
-                    DateTime date = Convert.ToDateTime(values[0]);
-
-                    // Getting the type of the tick
-                    string type = values[1];
-
-                    // Getting the 'quantity' value
-                    Int32 quantity = Convert.ToInt32(values[2]);
-
-                    // Getting the 'price' value
-                    float price = Convert.ToSingle(values[3], System.Globalization.CultureInfo.InvariantCulture);
-
-                    // Adding the three values into the Tick list
-                    tickList.Add(new Tick(date, type, quantity, price));
+                    tickList.Add(tick);
                 }
             }
 
-            // Returning the Tick list
+            // Returning the list
             return tickList;
         }
 
-        public void WriteData(List<Tick> tickList, string filePath)
+        // FetchData function
+        public IEnumerable<Tick> FetchData()
         {
+            // Open the CSV file and process each tick
+            using (var reader = new StreamReader(filePath_in))
+            {
+                // Skip header line
+                reader.ReadLine();
+
+                // Reading each of the lines
+                while (!reader.EndOfStream)
+                {
+                    // Getting the current line
+                    var line = reader.ReadLine();
+
+                    // Getting the values of the line
+                    var values = line.Split(',');
+
+                    // Setting the values with its corresponding type
+                        // Date
+                    DateTime date = Convert.ToDateTime(values[0]);
+
+                        // Type
+                    string type = values[1];
+
+                        // Quantity
+                    int quantity = Convert.ToInt32(values[2]);
+
+                        // Price
+                    float price = Convert.ToSingle(values[3], System.Globalization.CultureInfo.InvariantCulture);
+
+                    // Creating a Tick with the fetched values
+                    Tick tick = new Tick(date, type, quantity, price);
+
+                    yield return tick;
+                }
+            }
+        }
+
+        // ProcessTick function
+        public IEnumerable<Tick> ProcessTick()
+        {
+            foreach (var tick in FetchData())
+            {
+                // Update the start time at the first tick
+                if (startTime == DateTime.MinValue)
+                {
+                    startTime = tick.time;
+                }
+
+                // Check if the market is open or closed based on the hour
+                if (marketStartTime <= tick.time.TimeOfDay && tick.time.TimeOfDay <= marketEndTime)
+                {
+                    // Adding the tick to the toResample ticklist
+                    processedTickList.Add(tick);
+
+                    // Check if we need to resample based on the time span
+                    while (tick.time >= startTime + timeSpan)
+                    {
+                        ResampleTicks();
+                    }
+
+                    // Checking if the returned tick has been processed
+                    if (processedTickList.Last().type == "ProccessedType")
+                    {
+                        // Returning processed tick
+                        yield return processedTickList.Last();
+                    
+                    } else {
+                        // Returning null reference
+                        yield return null;
+
+                    }
+                }
+            }
+
+            // returning last found tick
+            yield return processedTickList.Last();
+
+        }
+
+        // Function that resample the Data
+        private Tick ResampleTicks()
+        {
+
+            // Get ticks within the current time frame
+            var ticksWithinInterval = processedTickList
+                .Where(t => startTime <= t.time && t.time < startTime + timeSpan)
+                .ToList();
+
+            // Creation of the variable resampledTick
+            Tick resampledTick;
+
+            // Create the resampled tick if there are ticks within the interval
+            if (ticksWithinInterval.Any())
+            {
+                int totalQuantity = ticksWithinInterval.Sum(t => t.quantity);
+                float price = ticksWithinInterval.Sum(t => t.price) / ticksWithinInterval.Count;
+
+                // Create a new tick with aggregated data for the interval
+                resampledTick = new Tick(startTime, "ProccessedType", totalQuantity, price);
+
+                // Clear ticks within the interval as they are now aggregated
+                processedTickList.RemoveAll(t => startTime <= t.time && t.time < startTime + timeSpan);
+
+                // Add the resampled tick to the list
+                processedTickList.Add(resampledTick);
+            }
+            else
+            {
+                // Create a new tick with empty data
+                resampledTick = new Tick(startTime, "Empty", 0, 0);
+
+                // Add a placeholder tick if there are no ticks within the interval
+                processedTickList.Add(resampledTick);
+            }
+
+            // Update the start time for the next interval
+            startTime += timeSpan;
+
+            // returning the aggretated Tick
+            return resampledTick;
+        }
+
+        // Write the Data inside a CSV
+        public void WriteData()
+        {
+            // Calling the GetAllProccessedTicks function
+            List<Tick> tickList = GetAllProccessedTicks();
+
             // Checking if the list is not null or empty
             if (tickList == null || tickList.Count == 0)
             {
@@ -71,7 +215,7 @@ namespace TradeSoft.Services
             }
 
             // Writing into the CSV file 
-            using (var writer = new StreamWriter(filePath))
+            using (var writer = new StreamWriter(filePath_out))
             {
                 // Writing header line if needed
                 writer.WriteLine("Time,Type,Quantity,Price");
@@ -79,71 +223,15 @@ namespace TradeSoft.Services
                 // Writing each tick as a line in the CSV file
                 foreach (var tick in tickList)
                 {
-                    
+
                     // Creating the line to insert inside the CSV
                     string line = $"{tick.time.ToString("dd-MM-yyyy HH:mm:ss")},{tick.type},{tick.quantity},{tick.price.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-                    
+
                     // Writing the line inside the CSV
                     writer.WriteLine(line);
                 }
             }
         }
 
-        public List<Tick> ResampleData(List<Tick> initialTickList, TimeSpan timeSpan)
-        {
-            // Creating the list of ticks
-            List<Tick> tickList = new();
-
-            // Checking if the list is not null or empty
-            if (initialTickList == null || initialTickList.Count == 0)
-            {
-                return tickList;
-            }
-
-            // Sort the initialTickList by time
-            //initialTickList.Sort((a, b) => a.time.CompareTo(b.time));
-
-            // Determine the start and end time for resampling
-            DateTime startTime = initialTickList[0].time;
-            DateTime endTime = initialTickList[initialTickList.Count - 1].time;
-
-            // Loop through 3 time intervals defined by timeFrame for Testing purposes
-            //for (DateTime currentTime = startTime; currentTime <= startTime + timeSpan + timeSpan; currentTime += timeSpan)
-
-            // Loop through time intervals defined by timeFrame
-            for (DateTime currentTime = startTime; currentTime <= endTime; currentTime += timeSpan)
-                {
-                // Creating the list of possible Ticks within the current time frame
-                var ticksWithinInterval = initialTickList.Where(tick => tick.time >= currentTime && tick.time < currentTime + timeSpan).ToList();
-
-                // Creating the new Tick that contains the values of the Ticks contained within the interval
-                if (ticksWithinInterval.Any())
-                {
-                    // Creating the total quantity
-                    int totalQuantity = ticksWithinInterval.Sum(t => t.quantity);
-
-                    // Creating the price by creating the average of the price within the interval
-                    float price = ticksWithinInterval.Sum(t => t.price) / ticksWithinInterval.Count;
-
-                    // Creating the price by taking the price of the first Tick
-                    //float price = ticksWithinInterval.First().price;
-
-                    // Create a new tick with aggregated data for the interval
-                    Tick resampledTick = new Tick(currentTime, "ResampledType", totalQuantity, price);
-
-                    // Adding the new Tick inside the list
-                    tickList.Add(resampledTick);
-                }
-                // Creating a placeholder tick, if there are no tick contained within the interval
-                else
-                {
-                    // Adding the placeholder Tick inside the list
-                    tickList.Add(new Tick(currentTime, "Empty", 0, 0));
-                }
-            }
-
-            // Returning the resampled Tick list
-            return tickList;
-        }
     }
 }
