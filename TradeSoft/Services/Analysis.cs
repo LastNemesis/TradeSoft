@@ -42,7 +42,6 @@ namespace TradeSoft.Services
 
         private float actualQuantity = 0; //c'est la variable qui va accumuler les quantité pour qu'on puisse connaitre la position, et donc à quel moment on doit calculer le rendement.
 
-        private OrderType currentType;
 
         /*          About return            */
 
@@ -71,7 +70,7 @@ namespace TradeSoft.Services
         private float worst = 0f;
         private float best = 0f;
 
-        private ExecutionData executed;
+        private ExecutionBit executed;
 
         List<float> historicOfReturns = new List<float>();
         Dictionary<float, float> historicReturns = new Dictionary<float, float>(); //key = current amount, value = poucentage of return compare to previous amount
@@ -113,8 +112,6 @@ namespace TradeSoft.Services
                 sw.Start();
             }
 
-            currentType = executed.Type;     //je récupère le type, car on en a besoin pour savoir si on doit calculer le rendement ou non
-            
             //update amount of portfolio
             currentAmount += executed.Price * executed.Quantity; //pas besoin de vérifier si c'est un sell ou un buy car la qunatité est négative en cas de sell donc le prix sera négatif
  
@@ -122,7 +119,7 @@ namespace TradeSoft.Services
              * si oui, on est en long, donc on calcule le rendement à la prochaine vente
              * si non, on est en short, donc on calcule le rendement au prochain buy 
              */
-            if ((actualQuantity > 0 & currentType == OrderType.sell) || (actualQuantity < 0 & currentType == OrderType.buy)) 
+            if ((actualQuantity > 0) || (actualQuantity < 0)) 
             {
                 //Step 2 : calculs of returns
                 cumulativeReturn = SimpleReturn(currentAmount, initAmount);

@@ -7,7 +7,7 @@ namespace TradeSoft.Services
     {
         public void Run(DataService dataService)
         {
-            Logger logger = new Logger("/Logs/log.txt");
+            Logger logger = new Logger(Path.Combine("..", "..", "..", "..", "TradeSoft", "Logs", "log.txt"));
             Broker broker = new Broker(logger);
             StrategyHandler strategyHandler = new StrategyHandler(broker);
             AnalysisHandler analysisHandler = new AnalysisHandler(strategyHandler.GetStrategiesId(), logger);
@@ -28,9 +28,10 @@ namespace TradeSoft.Services
                 analysisHandler.analyseExecutionBits(tickOrders);
             }
 
+            Console.WriteLine("end ?");
             //define how we use the ticks to have access to the last tick
             //maybe Strategies directly get market price from Broker in Close method ?
-            strategyHandler.CloseStrategies(dataService.listTicks[^1]);
+            //strategyHandler.CloseStrategies(dataService.listTicks[^1]);
         }
     }
 }

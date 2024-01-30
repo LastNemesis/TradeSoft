@@ -11,7 +11,7 @@ namespace TradeSoft.Services
             _logger  = logger;
             foreach (var strategyId in stratgiesId)
             {
-                _strategiesAnalysis[strategyId] = new Analysis();
+                _strategiesAnalysis[strategyId] = new Analysis(100000);
             }
         }
 
@@ -19,8 +19,8 @@ namespace TradeSoft.Services
         {
             foreach (var order in executedOrders)
             {
-                const String analysis = _strategiesAnalysis[order.StratId].runMethods(order.ExecutionBits[^1]);
-                _logger.LogAnalysis(order, analysis);
+                //const String analysis = _strategiesAnalysis[order.StratId].runMethods();
+                //_logger.LogAnalysis(order, analysis);
             }
         }
     }
