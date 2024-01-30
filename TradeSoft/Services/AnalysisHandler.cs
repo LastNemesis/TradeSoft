@@ -15,13 +15,19 @@ namespace TradeSoft.Services
             }
         }
 
-        public void analyseExecutionBits(List<Order> executedOrders)
+        public void AnalyseExecutionBit(ExecutionBit executionBit)
         {
-            foreach (var order in executedOrders)
-            {
-                //const String analysis = _strategiesAnalysis[order.StratId].runMethods();
-                //_logger.LogAnalysis(order, analysis);
-            }
+            _strategiesAnalysis[executionBit.Id].executed = executionBit;
+            _strategiesAnalysis[executionBit.Id].runMethods();
+
+            string analysisResults = _strategiesAnalysis[executionBit.Id].ToString();
+
+            _logger.LogAnalysis(executionBit, analysisResults);
+        }
+
+        public void AnalyseExecutionBit(object sender, ExecutionBit e)
+        {
+            AnalyseExecutionBit(e);
         }
     }
 }

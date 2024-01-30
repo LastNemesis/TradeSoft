@@ -14,8 +14,6 @@ namespace Main
             // Creating the dataService Object
             DataService dataService = new DataService();
 
-            dataService.WriteData();
-
             // Creating the engine Object       
             Engine engine = new Engine();
 

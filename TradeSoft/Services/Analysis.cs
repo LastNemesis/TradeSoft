@@ -39,6 +39,7 @@ namespace TradeSoft.Services
     {
         private float initAmount; //monant initial du portfilio
         private float currentAmount;
+        private float previousAmount;
 
         private float actualQuantity = 0; //c'est la variable qui va accumuler les quantité pour qu'on puisse connaitre la position, et donc à quel moment on doit calculer le rendement.
 
@@ -70,10 +71,9 @@ namespace TradeSoft.Services
         private float worst = 0f;
         private float best = 0f;
 
-        private ExecutionBit executed;
+        public ExecutionBit executed {  get; set; }
 
         List<float> historicOfReturns = new List<float>();
-        Dictionary<float, float> historicReturns = new Dictionary<float, float>(); //key = current amount, value = poucentage of return compare to previous amount
 
         /*          About risk            */
 
@@ -124,32 +124,34 @@ namespace TradeSoft.Services
                 //Step 2 : calculs of returns
                 cumulativeReturn = SimpleReturn(currentAmount, initAmount);
 
-                if (historicReturns.Count == 0)
+                if (historicOfReturns.Count == 0)
                 {
                     currentReturn = cumulativeReturn;
                 }else{
-                    currentReturn = SimpleReturn(currentAmount, historicReturns.Keys.Last()); //historicReturns.Keys.Last()
+                    currentReturn = SimpleReturn(currentAmount, previousAmount);
                 }
-                historicReturns.Add(currentAmount, currentReturn);
 
-                if (historicReturns.Count > 1) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
+                historicOfReturns.Add(currentReturn);
+                previousAmount = currentAmount;
+
+                if (historicOfReturns.Count > 1) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
                 {
-                    expectedReturn = EReturn(historicReturns);
+                    expectedReturn = EReturn(historicOfReturns);
 
                     if(cumulativeReturn > 0) //alors la moyenne de gain, en excluant les pertes
                     {
-                        meanGain = MGain(historicReturns);
+                        meanGain = MGain(historicOfReturns);
                     }else{ //alors on retourne la moyenne des pertes quand on exclu les gains
-                        meanLoss = MLoss(historicReturns);
+                        meanLoss = MLoss(historicOfReturns);
                     }
 
                     //Step 3 : Risk measurement
-                    volatility = (float)Math.Sqrt(Var(historicReturns, expectedReturn));
+                    volatility = (float)Math.Sqrt(Var(historicOfReturns, expectedReturn));
                     sharpRatio = SharpRatio(expectedReturn, volatility);
 
                     //Simplifier en faisant 1 seule méthode, et on passe en paramètre le % de précision
-                    historicalVaR95 = HVaR95(historicOfReturns) / initAmount * 100; //en pourcentage par rapport au portefeuille de base
-                    historicalVaR99 = HVaR99(historicOfReturns) / initAmount * 100;
+                    //historicalVaR95 = HVaR95(historicOfReturns) / initAmount * 100; //en pourcentage par rapport au portefeuille de base
+                    //historicalVaR99 = HVaR99(historicOfReturns) / initAmount * 100;
 
                 }
                 else{
@@ -166,7 +168,7 @@ namespace TradeSoft.Services
                 worst = currentReturn;
 
             //Calculation of SQN (System Quality Number) used to evaluate the quality of a trading system taking into account both: performance and volatility
-            expectancy = Expectancy(historicReturns, meanGain, meanLoss);
+            expectancy = Expectancy(historicOfReturns, meanGain, meanLoss);
 
             /* If SQN is between:
              * 1.6 - 1.9 Below average
@@ -177,7 +179,7 @@ namespace TradeSoft.Services
              * 7.0 - Holy Grail?
              * SQN is deemed reliable if nbr of trade >= 30
              */
-            SQN = expectancy / volatility * (float)Math.Sqrt(historicReturns.Count);
+            SQN = expectancy / volatility * (float)Math.Sqrt(historicOfReturns.Count);
 
             //When the position close meaning when quantity = 0 we stop the clock
             if ((actualQuantity > 0 && actualQuantity + executed.Quantity < 0) || (actualQuantity < 0 && actualQuantity + executed.Quantity > 0))
@@ -203,11 +205,11 @@ namespace TradeSoft.Services
         }
 
         // Calculation of the Expected Return
-        public float EReturn(Dictionary<float, float> dicoReturns)
+        public float EReturn(List<float> dicoReturns)
         {
             float sum = 0;
 
-            foreach (float simpleReturn in dicoReturns.Values)
+            foreach (float simpleReturn in dicoReturns)
             {
                 sum += simpleReturn;
             }
@@ -217,12 +219,12 @@ namespace TradeSoft.Services
         }
 
         //Calculate the mean of loss, when return is a loss
-        public float MLoss(Dictionary<float, float> dicoReturns)
+        public float MLoss(List<float> dicoReturns)
         {
             //Counting the number of loss
             int numberOfLoss = 0;
             float sumOfLosses = 0f;
-            foreach (float returns in dicoReturns.Values)
+            foreach (float returns in dicoReturns)
             {
                 if (returns < 0)
                 {
@@ -237,12 +239,12 @@ namespace TradeSoft.Services
         }
 
         //Calculation of mean gain (from only positive return)
-        public float MGain(Dictionary<float, float> dicoReturns)
+        public float MGain(List<float> dicoReturns)
         {
             //Counting the number of loss
             int numberOfLoss = 0;
             float sumOfLosses = 0f;
-            foreach (float returns in dicoReturns.Values)
+            foreach (float returns in dicoReturns)
             {
                 if (returns >= 0)
                 {
@@ -278,12 +280,12 @@ namespace TradeSoft.Services
         }
 
         //Computation of the Variance
-        public float Var(Dictionary<float, float> dicoReturns, float mean)
+        public float Var(List<float> dicoReturns, float mean)
         {
             float sustraction;
             float sum = 0;
 
-            foreach (float returns in dicoReturns.Values)
+            foreach (float returns in dicoReturns)
             {
                 sustraction = returns - mean;
                 sum += sustraction * sustraction;
@@ -320,13 +322,13 @@ namespace TradeSoft.Services
         }
 
         //To be able to calculate the System Quality Number (SQN)
-        public float Expectancy(Dictionary<float, float> dicoReturns, float meanGain, float meanLoss)
+        public float Expectancy(List<float> dicoReturns, float meanGain, float meanLoss)
         {
             float gainProbability = 0;
             float lossProbability = 0;
             float expectancy = 0;
 
-            foreach (float returns in dicoReturns.Values)
+            foreach (float returns in dicoReturns)
             {
                 if(returns > 0)
                 {
@@ -353,8 +355,14 @@ namespace TradeSoft.Services
             {
                 Sum += position;
             }
-            TimeSpan averageTime = TimeSpan.FromTicks(Sum.Ticks / openPositionTimes.Count());
-            return String.Format("cumulativeReturn: {0}, expectedReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, expectedReturn, meanLoss, meanGain, volatility, sharpRatio, averageTime);
+            if(openPositionTimes.Count > 0)
+            {
+                TimeSpan averageTime = TimeSpan.FromTicks(Sum.Ticks / openPositionTimes.Count());
+                return String.Format("cumulativeReturn: {0}, expectedReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, expectedReturn, meanLoss, meanGain, volatility, sharpRatio, averageTime);
+            } else
+            {
+                return String.Format("cumulativeReturn: {0}, expectedReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, expectedReturn, meanLoss, meanGain, volatility, sharpRatio, null);
+            }
         }
 
         /*

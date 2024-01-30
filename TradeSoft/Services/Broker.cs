@@ -29,11 +29,13 @@ namespace TradeSoft.Services
         }
 
         //called each tick to simulate the new Tick of execution to update market values
-        public void simulateTick(Tick tick)
+        public void SimulateTick(Tick tick)
         {
             _marketPrice = tick.price;
+            Console.WriteLine(_pendingOrders.Count);
 
             foreach (Order order in _pendingOrders) {
+                Console.WriteLine(order);
                 if(order.Type == OrderType.Market)
                 {
                     ExecutionBit executionBit = new ExecutionBit(order.StratId, _marketPrice, order.Quantity, DateTime.Now);
@@ -41,35 +43,21 @@ namespace TradeSoft.Services
                     OrderExecuted?.Invoke(order.StratId, executionBit);
                 }
             }
+
+            _pendingOrders.Clear();
         }
 
         public void MarketOrder(int stratId, float quantity)
         {
             Order order = new MarketOrder(stratId, quantity, DateTime.Now);
-            _pendingOrders.Append(order);
+            logger.LogOrder(order);
+            _pendingOrders.Add(order);
         }
 
-        ////called in the case of a Sell order
-        //public void Sell(Order order) {
-        //    logger.LogOrder(order);
-
-        //    ApplyOrder(order);
-        //}
-
-        ////called in the case of a Buy order
-        //public void Buy(Order order) {
-        //    logger.LogOrder(order);
-        //    Console.WriteLine(order.ToString());
-        //    ExecutionBit executionBit = new ExecutionBit(order.Price, order.Quantity, DateTime.Now);
-        //    order.updateExecution(executionBit);
-
-        //    ApplyOrder(order);
-        //}
-
-        //called by Sell and Buy function to update the position and store the applied order
+        //update the position
         public void ApplyOrder(ExecutionBit executionBit)
         {
-            logger.LogExecutedOrder(executionBit);
+            logger.LogExecutedBit(executionBit);
             Position position = GetPosition(executionBit.Id);
             position.UpdatePosition(executionBit);
         }
@@ -100,19 +88,6 @@ namespace TradeSoft.Services
             }
 
             return 0f; //if no position found for the strategy, it mean no position was ever taken
-        }
-
-        //used to get all order for the current Tick of execution
-        public List<Order> GetTickOrders()
-        {
-            return new List<Order>();
-            //return _ordersLastTick;
-        }
-
-        //used to get all orders
-        public List<Order> GetAllOrders()
-        {
-            return _orders;
         }
 
         public event EventHandler<ExecutionBit> OrderExecuted;

@@ -7,6 +7,7 @@ namespace TradeSoft.Services
     public class Logger
     {
         private readonly string filePath;
+        private List<string> logs = new List<string>();
 
         public Logger(string filePath)
         {
@@ -16,35 +17,39 @@ namespace TradeSoft.Services
         public void LogTick(Tick tick)
         {
             string logMessage = $"Tick: {tick.time}, Quantity: {tick.quantity}, Price: {tick.price}";
-            WriteToFile(logMessage);
+            logs.Add(logMessage);
         }
 
         public void LogOrder(Order order)
         {
-            string logMessage = $"Order: OrderId: {order.OrderId}, StrategyId: {order.StratId}, Price: {order.Price}, Quantity: {order.Quantity}, DateTime: {order.DT}";
-            WriteToFile(logMessage);
+            string logMessage = $"Order: {order}";
+            logs.Add(logMessage);
         }
 
-        public void LogExecutedOrder(ExecutionBit executionBit)
+        public void LogExecutedBit(ExecutionBit executionBit)
         {
             string logMessage = $"Executed Bit: StrategyId: {executionBit.Id}, Price: {executionBit.Price}, Quantity: {executionBit.Quantity}, DateTime: {executionBit.DT}";
-            WriteToFile(logMessage);
+            logs.Add(logMessage);
         }
 
-        public void LogAnalysis(Order order, String analysis)
+        public void LogAnalysis(ExecutionBit executionBit, String analysis)
         {
-            string logMessage = $"Analysis: Strategy: {order.StratId}, OrderId: {order.OrderId} {analysis}";
-            WriteToFile(logMessage);
+            string logMessage = $"Analysis: Strategy: {executionBit.Id}, {analysis}";
+            logs.Add(logMessage);
         }
 
-        private void WriteToFile(string message)
+        public void Log()
         {
             try
             {
                 using (StreamWriter writer = new StreamWriter(filePath, true))
                 {
-                    writer.WriteLine($"{DateTime.Now} - {message}");
+                    foreach (string line in logs)
+                    {
+                        writer.WriteLine(line);
+                    }
                 }
+                logs.Clear();
             }
             catch (IOException ex)
             {

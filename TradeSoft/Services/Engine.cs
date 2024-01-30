@@ -13,19 +13,16 @@ namespace TradeSoft.Services
             AnalysisHandler analysisHandler = new AnalysisHandler(strategyHandler.GetStrategiesId(), logger);
 
             broker.OrderExecuted += strategyHandler.NotifyStrategies;
-            //broker.OrderExecuted += analysisHandler.GetMethod
+            broker.OrderExecuted += analysisHandler.AnalyseExecutionBit;
 
             foreach (Tick tick in dataService.ticks())
             {
                 Console.WriteLine(tick.ToString());
                 logger.LogTick(tick);
-                broker.simulateTick(tick);
+                broker.SimulateTick(tick);
                 strategyHandler.SendTick(tick);
 
-
-                List<Order> tickOrders = broker.GetTickOrders();
-
-                analysisHandler.analyseExecutionBits(tickOrders);
+                logger.Log();
             }
 
             Console.WriteLine("end ?");
