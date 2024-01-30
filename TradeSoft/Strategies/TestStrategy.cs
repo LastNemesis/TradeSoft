@@ -19,12 +19,12 @@ namespace TradeSoft.Strategies
                 if(tick.price > lastTick.price && shares >= 1)
                 {
                     Console.WriteLine("sell 1");
-                    this.Sell(-1, tick.price);
+                    this.Sell(1);
                     shares--;
                 } else
                 {
                     Console.WriteLine("buy 1");
-                    this.Buy(1, tick.price);
+                    this.Buy(1);
                     shares++;
                 }
             }
@@ -33,7 +33,7 @@ namespace TradeSoft.Strategies
         }
 
         override
-        public void Notify(Order order)
+        public void Notify(ExecutionBit executionBit)
         {
             //Console.WriteLine(order.ToString());
             return;

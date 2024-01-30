@@ -12,7 +12,10 @@ namespace TradeSoft.Services
             StrategyHandler strategyHandler = new StrategyHandler(broker);
             AnalysisHandler analysisHandler = new AnalysisHandler(strategyHandler.GetStrategiesId(), logger);
 
-            foreach(Tick tick in dataService.ticks())
+            broker.OrderExecuted += strategyHandler.NotifyStrategies;
+            //broker.OrderExecuted += analysisHandler.GetMethod
+
+            foreach (Tick tick in dataService.ticks())
             {
                 Console.WriteLine(tick.ToString());
                 logger.LogTick(tick);
@@ -23,7 +26,6 @@ namespace TradeSoft.Services
                 List<Order> tickOrders = broker.GetTickOrders();
 
                 analysisHandler.analyseExecutionBits(tickOrders);
-                strategyHandler.NotifyStrategies(tickOrders);
             }
 
             //define how we use the ticks to have access to the last tick

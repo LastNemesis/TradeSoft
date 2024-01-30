@@ -37,7 +37,7 @@ namespace TradeSoft.Services
 
         public void CloseStrategies(Tick lastTick)
         {
-            if( _strategies == null )
+            if (_strategies == null)
             {
                 return;
             }
@@ -67,29 +67,29 @@ namespace TradeSoft.Services
                 return;
             }
 
-            foreach(Strategy strategy in _strategies)
+            foreach (Strategy strategy in _strategies)
             {
                 strategy.Broker = broker;
             }
         }
 
-        public void NotifyStrategies(List<Order> orders)
+        public void NotifyStrategies(ExecutionBit executionBit)
         {
             if (_strategies == null)
             {
                 return;
             }
-
-            foreach (Order order in orders)
+            foreach (Strategy strategy in _strategies)
             {
-                foreach (Strategy strategy in _strategies)
+                if (executionBit.Id == strategy.Id)
                 {
-                    if(order.StratId == strategy.Id)
-                    {
-                        strategy.Notify(order);
-                    }
+                    strategy.Notify(executionBit);
                 }
             }
+        }
+
+        public void NotifyStrategies(object sender, ExecutionBit e) {
+            NotifyStrategies(e);
         }
 
         public List<int> GetStrategiesId()

@@ -19,7 +19,7 @@ namespace TradeSoft.Services
         {
             foreach (var order in executedOrders)
             {
-                const String analysis = _strategiesAnalysis[order.StratId].runMethods(order.ExecutionBits[^1])
+                const String analysis = _strategiesAnalysis[order.StratId].runMethods(order.ExecutionBits[^1]);
                 _logger.LogAnalysis(order, analysis);
             }
         }

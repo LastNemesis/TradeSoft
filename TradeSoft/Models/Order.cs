@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,30 +22,30 @@ namespace TradeSoft.Models
     public class Order
     {
         // Static field to keep track of the last assigned ID
-        private static int id_counter = 0;
+        protected static int id_counter = 0;
 
         // Unique identifier of the order
-        private int _orderId;
+        protected int _orderId;
 
         // Unique identifier of the strategy behind this order
-        private int _stratId;
+        protected int _stratId;
 
         // Order price
         private float _price;
 
         // Could be named size
-        private float _quantity;
+        protected float _quantity;
 
         private List<ExecutionBit> _executionBits = new List<ExecutionBit>();
 
         // Buy or sell
-        private OrderType _type;
+        protected OrderType _type;
 
         // Status of the Order Completion
-        private OrderStatus _status;
+        protected OrderStatus _status;
 
         // Order time-stamp
-        private DateTime _dt;
+        protected DateTime _dt;
 
         // Execution data
         private ExecutionData _executionData;
@@ -97,38 +98,40 @@ namespace TradeSoft.Models
             set { _status = value; }
         }
 
-        public Order(int stratId, float price, float quantity, OrderType type, DateTime dt)
+        public OrderType Type
+        {
+            get { return _type; }
+        }
+
+        public Order(int stratId, float quantity, DateTime dt)
         {
             // Assigning a unique order ID
             _orderId = ++id_counter;
 
             _stratId = stratId;
-            _price = price;
             _quantity = quantity;
-            _type = type;
             _dt = dt;
         }
+    }
 
-        public void updateExecution(ExecutionBit executionBit)
+    public class MarketOrder : Order
+    {
+        public MarketOrder(int stratId, float quantity, DateTime dt) : base(stratId, quantity, dt)
         {
-            _executionData.Quantity += executionBit.Quantity;
-
-            if(_executionData.Quantity == _quantity) {
-                _status = OrderStatus.completed;
-            }
+            _type = OrderType.Market;
         }
 
         public override string ToString()
         {
-            return $"Order ID: {_orderId}, Strategy ID: {_stratId}, Price: {_price}, Quantity: {_quantity}";
+            return $"MarketOrder ID: {_orderId}, Strategy ID: {_stratId}, Quantity: {_quantity}";
         }
     }
-
-
     public enum OrderType
     {
-        buy,
-        sell
+        Market,
+        Limit,
+        Stop,
+        StopLimit
     }
 
     public enum OrderStatus

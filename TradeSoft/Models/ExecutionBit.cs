@@ -11,11 +11,19 @@
         // Order time
         private DateTime _dt;
 
+        //Strategy Id
+        private int _id;
+
         //properties : getters and setters for each field
         public float Price
         {
             get { return _price; }
             set { _price = value; }
+        }
+
+        public int Id
+        {
+            get { return _id; }
         }
 
         public float Quantity
@@ -29,13 +37,15 @@
             set { _dt = DateTime.Now; }
         }
 
-        public ExecutionBit(float price, float quantity, DateTime dt)
+        public ExecutionBit(int id, float price, float quantity, DateTime dt)
         {
             _price = price;
 
             _quantity = quantity;
 
             _dt = dt;
+
+            _id = id;
         }
     }
 }

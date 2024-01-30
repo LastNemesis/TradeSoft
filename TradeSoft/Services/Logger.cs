@@ -25,9 +25,8 @@ namespace TradeSoft.Services
             WriteToFile(logMessage);
         }
 
-        public void LogExecutedOrder(Order order)
+        public void LogExecutedOrder(ExecutionBit executionBit)
         {
-            ExecutionBit executionData = order.ExecutionBits[^1];
             string logMessage = $"Executed Order: OrderId: {order.OrderId}, Status: {order.Status}, Price: {executionData.Price}, Quantity: {executionData.Quantity}, DateTime: {executionData.DT}";
             WriteToFile(logMessage);
         }
