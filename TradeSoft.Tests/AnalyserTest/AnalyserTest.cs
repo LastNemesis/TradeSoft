@@ -44,9 +44,8 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_EReturn_ShouldCalculateExpectedReturn()
         {
             //Arrange - get variable, classes, ... to test
-            Dictionary<float, float> dicoReturns = new Dictionary<float, float> {{ 80, -20 },
-                                                                                 { 70, -12.5f},
-                                                                                 { 90, 28.5f}};
+            List<float> dicoReturns = new List<float> { -20, -12.5f, 28.5f };
+
             float totalReturn = -20 - 12.5f + 28.5f;
             float expectedReturn = totalReturn / dicoReturns.Count;
 
@@ -62,11 +61,7 @@ namespace TradeSoft.Tests.AnalyserTest
         {
             //Arrange - get variable, classes, ... to test
             //List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f};
-            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
-                                                                                 { 70, -12.5f},
-                                                                                 { 90, 28.5f},
-                                                                                 { 95, 5.56f},
-                                                                                 { 92, -3.16f}};
+            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float totalLoss = (-20f - 12.5f - 3.16f);
             int nbLoss = 3;
             float meanLoss = totalLoss / nbLoss;
@@ -83,11 +78,7 @@ namespace TradeSoft.Tests.AnalyserTest
         {
             //Arrange - get variable, classes, ... to test
             //List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f };
-            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
-                                                                                 { 70, -12.5f},
-                                                                                 { 90, 28.5f},
-                                                                                 { 95, 5.56f},
-                                                                                 { 92, -3.16f}};
+            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float totalGain = (28.5f + 5.56f);
             int nbGain = 2;
             float meanGain = totalGain / nbGain;
@@ -117,11 +108,7 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_Var_ShouldReturnVariance()
         {
             //Arrange - get variable, classes, ... to test
-            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
-                                                                                 { 70, -12.5f},
-                                                                                 { 90, 28.5f},
-                                                                                 { 95, 5.56f},
-                                                                                 { 92, -3.16f}};
+            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float mean = (-20f - 12.5f + 28.5f + 5.56f - 3.16f) / 5; //-0,32
             float variance = (387.3024f + 148.3524f + 830.5924f + 34.5744f + 8.0656f) / 5f;
 
@@ -136,11 +123,7 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_Expectancy_ShouldReturnExpectancy()
         {
             //Arrange - get variable, classes, ... to test
-            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
-                                                                                 { 70, -12.5f},
-                                                                                 { 90, 28.5f},
-                                                                                 { 95, 5.56f},
-                                                                                 { 92, -3.16f}};
+            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float meanGain = 17.03f;
             float meanLoss = -11.87f;
             float expectancy = -(meanGain * 0.4f + meanLoss * 0.6f) / meanLoss;
@@ -175,11 +158,7 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_SharpRatio_ShouldCalculateFloat() //Return a percentage
         {
             //Arrange
-            Dictionary<float, float> dicoReturns = new Dictionary<float, float>() {{80f, -20f},
-                                                                                 { 70f, -12.5f},
-                                                                                 { 90f, 28.5f},
-                                                                                 { 95f, 5.56f},
-                                                                                 { 92f, -3.16f}};
+            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float mean = (-20f - 12.5f + 28.5f + 5.56f - 3.16f) / 5f; //-0,32
             float variance = (387.3024f + 148.3524f + 830.5924f + 34.5744f + 8.0656f) / 5f;
             float stDeviation = (float)Math.Sqrt(variance);
