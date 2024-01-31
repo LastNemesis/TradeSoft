@@ -31,7 +31,7 @@ namespace TradeSoft.Models
         protected int _stratId;
 
         // Order price
-        private float _price;
+        protected float _price;
 
         // Could be named size
         protected float _quantity;
@@ -123,7 +123,21 @@ namespace TradeSoft.Models
 
         public override string ToString()
         {
-            return $"MarketOrder ID: {_orderId}, Strategy ID: {_stratId}, Quantity: {_quantity}";
+            return $"MarketOrder, ID: {_orderId}, Strategy ID: {_stratId}, Quantity: {_quantity}, Time {_dt}";
+        }
+    }
+
+    public class LimitOrder : Order
+    {
+        public LimitOrder(int stratId, float quantity, float limitPrice, DateTime dt) : base(stratId, quantity, dt)
+        {
+            _type = OrderType.Limit;
+            _price = limitPrice;
+        }
+
+        public override string ToString()
+        {
+            return $"LimitOrder, ID: {_orderId}, Strategy ID: {_stratId}, Quantity: {_quantity}, LimitPrice: {_price} Time {_dt}";
         }
     }
     public enum OrderType

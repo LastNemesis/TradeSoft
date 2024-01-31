@@ -34,7 +34,7 @@ namespace TradeSoft.Services
 
         public void LogAnalysis(ExecutionBit executionBit, String analysis)
         {
-            string logMessage = $"Analysis: Strategy: {executionBit.Id}, {analysis}";
+            string logMessage = $"Analysis: Strategy: {executionBit.Id}, {analysis}, Time: {executionBit.DT}";
             logs.Add(logMessage);
         }
 

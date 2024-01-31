@@ -38,6 +38,10 @@ namespace TradeSoft.Models
             {
                 _broker.MarketOrder(Id, -quantity);
             }
+            else if (type == OrderType.Limit)
+            {
+                 _broker.LimitOrder(Id, -quantity, price);
+            }
         }
 
         protected void Buy(float quantity, float price = 0.0f, OrderType type = OrderType.Market)
@@ -45,6 +49,10 @@ namespace TradeSoft.Models
             if (type == OrderType.Market)
             {
                 _broker.MarketOrder(Id, quantity);
+            }
+            else if (type == OrderType.Limit)
+            {
+                _broker.LimitOrder(Id, quantity, price);
             }
         }
 
