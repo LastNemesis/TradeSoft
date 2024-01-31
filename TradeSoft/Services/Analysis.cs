@@ -358,10 +358,10 @@ namespace TradeSoft.Services
             if(openPositionTimes.Count > 0)
             {
                 TimeSpan averageTime = TimeSpan.FromTicks(Sum.Ticks / openPositionTimes.Count());
-                return String.Format("cumulativeReturn: {0}, expectedReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, expectedReturn, meanLoss, meanGain, volatility, sharpRatio, averageTime);
+                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, averageTime);
             } else
             {
-                return String.Format("cumulativeReturn: {0}, expectedReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, expectedReturn, meanLoss, meanGain, volatility, sharpRatio, null);
+                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, null);
             }
         }
 
