@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -10,38 +12,85 @@ using TradeSoft.Models;
 /* This is Analysis class.
  * This class will be instanciated by each strategies to perform some analysis about the performance of the strategy
  * 
+ * 
+ * --> rappeler que le module est appelé à chaque executionData from broker
+ * 
+ * --> liste de rendements pour le retourner à la fin 
+ * --> expected return on va le garder et l'update, il sera calculer à partir des valeurs du ExecuteData actuelle
+ * et des rendements précédants stockés dans la liste, de sorte que le trader puissent voir la moyennede rendement
+ * qu'il produit avec sa stratégie à tout moment.
+ * 
+ * Récupération du rendement: (ça normalement c'est fait)
+ * on fait un total des Qty à chaque order.
+ * Si Qty > 0 : A la prochaine Vente(Sell) on récup le rendement
+ * Si Qty < 0 : Au prochain Achat(Buy) on récup le rendement
+ * 
+ * 
+ * --> rechercher comment calculer la volatilité (ecart-type) en backtesting
+ * (a chaque execution data, sans que ça explose quand on a 1324652243 execution data)
+ * 
+ * On garde TLoss et MLoss pour les afficher que quand le rendement actuel est négatif
+ * On garde TGain et MGain pour les afficher que quand le rendement actuel est positif
  */
 
 namespace TradeSoft.Services
 {
     public class Analysis
     {
-        //Variable storing the amount of the total return over all the period
-        private float totalReturn;
+        private float initAmount; //monant initial du portfilio
+        private float currentAmount;
+        private float previousAmount;
 
-        //Variable storing the amount of the expected return per transaction
-        private float expectedReturn;
+        private float actualQuantity = 0; //c'est la variable qui va accumuler les quantité pour qu'on puisse connaitre la position, et donc à quel moment on doit calculer le rendement.
+
+
+        /*          About return            */
+
+        private float cumulativeReturn; //c'est un %, return par rapport au montant initial
+        private float currentReturn; // par rapport à l'état précédant (montant précédant) (%)
+        private float expectedReturn; //expected return per transaction (%)
+
+        //Initialisation of an internal clock to get the average time of an open position to be close
+        Stopwatch sw = new Stopwatch();
+        List<TimeSpan> openPositionTimes = new List<TimeSpan>();
 
         //Variable storing the amount of the total losses over all the period (do not taking gains into account)
-        private float totalLoss;
+        //private float totalLoss;
 
         //Variable storing mean of losses par transactions (only over losses)
         private float meanLoss;
 
         //Variable storing the amount of the total gain over all the period (do not taking losses into account)
-        private float totalGain;
+        //private float totalGain;
 
         //Variable storing mean of gain par transactions (only over gains)
         private float meanGain;
 
         //Variable calculating the difference between higher and lowest price over the period
-        private float maxDrawdown;
+        private float maxDrawdown; // possible improvement : donné la période (entre quand et quand c'est arrivé)
+        private float worst = 0f;
+        private float best = 0f;
 
+        public ExecutionBit executed {  get; set; }
 
-        //list of orders
-        private Order[] allOrders;
+        List<float> historicOfReturns = new List<float>();
 
-        //List<float> allReturn = new List<float>();
+        /*          About risk            */
+
+        //private float variance;
+        private float volatility;       //standard deviation
+        private float sharpRatio;       //My portfolio execess returns per unit of the portfolio total risk Bigger is better 
+        private float expectancy;
+        private float SQN;              //System Quality Number
+        private float historicalVaR95;
+        private float historicalVaR99;
+
+        /*          Constructor            */
+        public Analysis(float initAmount)
+        {
+            this.initAmount = initAmount;
+            currentAmount = initAmount;
+        }
 
 
         /*      Method for calculation      */
@@ -54,91 +103,162 @@ namespace TradeSoft.Services
          * Les types retour me permettrons de faire de bons tests unitaires.
          */
 
-        //Calculation of all simple returns and puting them into a list
-        public float SimpleReturn(float a, float b)
+
+        public void runMethods() //méthode dans laquelle on appelle les autres méthodes et ou on fait les check pour savoir quoi faire
+        {
+            //Start my inerClock when we take a position
+            if (actualQuantity == 0)
+            {
+                sw.Start();
+            }
+
+            //update amount of portfolio
+            currentAmount += executed.Price * executed.Quantity; //pas besoin de vérifier si c'est un sell ou un buy car la qunatité est négative en cas de sell donc le prix sera négatif
+ 
+            /* step 1 : je regarde si la quantité est positive, 
+             * si oui, on est en long, donc on calcule le rendement à la prochaine vente
+             * si non, on est en short, donc on calcule le rendement au prochain buy 
+             */
+            if ((actualQuantity > 0) || (actualQuantity < 0)) 
+            {
+                //Step 2 : calculs of returns
+                cumulativeReturn = SimpleReturn(currentAmount, initAmount);
+
+                if (historicOfReturns.Count == 0)
+                {
+                    currentReturn = cumulativeReturn;
+                }else{
+                    currentReturn = SimpleReturn(currentAmount, previousAmount);
+                }
+
+                historicOfReturns.Add(currentReturn);
+                previousAmount = currentAmount;
+
+                if (historicOfReturns.Count > 1) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
+                {
+                    expectedReturn = EReturn(historicOfReturns);
+
+                    if(cumulativeReturn > 0) //alors la moyenne de gain, en excluant les pertes
+                    {
+                        meanGain = MGain(historicOfReturns);
+                    }else{ //alors on retourne la moyenne des pertes quand on exclu les gains
+                        meanLoss = MLoss(historicOfReturns);
+                    }
+
+                    //Step 3 : Risk measurement
+                    volatility = (float)Math.Sqrt(Var(historicOfReturns, expectedReturn));
+                    sharpRatio = SharpRatio(expectedReturn, volatility);
+
+                    //Simplifier en faisant 1 seule méthode, et on passe en paramètre le % de précision
+                    //historicalVaR95 = HVaR95(historicOfReturns) / initAmount * 100; //en pourcentage par rapport au portefeuille de base
+                    //historicalVaR99 = HVaR99(historicOfReturns) / initAmount * 100;
+
+                }
+                else{
+                    expectedReturn = cumulativeReturn;
+                    //variance = 0;
+                    volatility = 0;
+                }
+
+            }
+            //Updating best/worst returns if necessary
+            if (currentReturn > best)
+                best = currentReturn;
+            if (currentReturn < worst)
+                worst = currentReturn;
+
+            //Calculation of SQN (System Quality Number) used to evaluate the quality of a trading system taking into account both: performance and volatility
+            expectancy = Expectancy(historicOfReturns, meanGain, meanLoss);
+
+            /* If SQN is between:
+             * 1.6 - 1.9 Below average
+             * 2.0 - 2.4 Average
+             * 2.5 - 2.9 Good
+             * 3.0 - 5.0 Excellent
+             * 5.1 - 6.9 Superb
+             * 7.0 - Holy Grail?
+             * SQN is deemed reliable if nbr of trade >= 30
+             */
+            SQN = expectancy / volatility * (float)Math.Sqrt(historicOfReturns.Count);
+
+            //When the position close meaning when quantity = 0 we stop the clock
+            if ((actualQuantity > 0 && actualQuantity + executed.Quantity < 0) || (actualQuantity < 0 && actualQuantity + executed.Quantity > 0))
+            {
+                sw.Stop();
+                openPositionTimes.Add(sw.Elapsed);
+                sw.Restart();
+            }else if (executed.Quantity + actualQuantity == 0)
+            {
+                sw.Stop();
+                openPositionTimes.Add(sw.Elapsed);
+                sw.Reset();
+            }
+
+            actualQuantity += executed.Quantity; //on update la quantité
+        }
+
+        public float SimpleReturn(float current, float init)
         {
             float simpleReturn;
-            simpleReturn = (a - b) / b * 100;
+            simpleReturn = (current - init) / init * 100;
             return simpleReturn;
         }
 
-        //Calculation of the total return
-        public float TReturn(List<float> returns)
+        // Calculation of the Expected Return
+        public float EReturn(List<float> dicoReturns)
         {
             float sum = 0;
-            foreach (float r in returns)
+
+            foreach (float simpleReturn in dicoReturns)
             {
-                sum += r;
+                sum += simpleReturn;
             }
 
-            return sum;
-        }
-
-        // Calculation of the Expected Return
-        public float EReturn(int lenghtListReturn) //on passera en paramètre le nombre d'élément dans la liste de return
-        {
-            expectedReturn = totalReturn / (lenghtListReturn); 
+            expectedReturn = sum / dicoReturns.Count;
             return expectedReturn;
         }
 
-        //Calculation of the total of losses (negatives returns)
-        public float TLoss(List<float> returns)
-        {
-            float sumOfLosses = 0;
-            foreach (float r in returns)
-            {
-                if (r < 0)
-                    sumOfLosses += r;
-            }
-
-            return sumOfLosses;
-        }
-
         //Calculate the mean of loss, when return is a loss
-        public float MLoss(List<float> returns)
+        public float MLoss(List<float> dicoReturns)
         {
             //Counting the number of loss
             int numberOfLoss = 0;
-            foreach (float r in returns)
+            float sumOfLosses = 0f;
+            foreach (float returns in dicoReturns)
             {
-                if (r < 0)
+                if (returns < 0)
+                {
                     numberOfLoss++;
+                    sumOfLosses += returns;
+                }
             }
 
             //Caluculating mean of losses
-            float mean = totalLoss / numberOfLoss;
+            float mean = sumOfLosses / numberOfLoss;
             return mean;
-        }
-
-        //Calculation of total gain (only positive returns)
-        public float TGain(List<float> returns)
-        {
-            float sum = 0;
-            foreach (float r in returns)
-            {
-                if (r > 0)
-                    sum += r;
-            }
-            return sum;
         }
 
         //Calculation of mean gain (from only positive return)
-        public float MGain(List<float> returns)
+        public float MGain(List<float> dicoReturns)
         {
-            //Counting the number of gain
-            int numberOfGain = 0;
-            foreach (float r in returns)
+            //Counting the number of loss
+            int numberOfLoss = 0;
+            float sumOfLosses = 0f;
+            foreach (float returns in dicoReturns)
             {
-                if (r > 0)
-                    numberOfGain++;
+                if (returns >= 0)
+                {
+                    numberOfLoss++;
+                    sumOfLosses += returns;
+                }
             }
 
-            //Caluculating mean of gain
-            float mean = totalGain / numberOfGain;
+            //Caluculating mean of losses
+            float mean = sumOfLosses / numberOfLoss;
             return mean;
         }
 
-        //Calculation of maximum Drawdown (see definition at the end)
+        //Calculation of maximum Drawdown (see definition at the end) 
         public float Drawdown(List<float> returns)
         {
             float sumOfFollowingLoss = 0;
@@ -149,69 +269,140 @@ namespace TradeSoft.Services
                 if (returns[i] < 0)
                 {
                     sumOfFollowingLoss += returns[i];
-                }
-                else
-                {
+                }else{
                     sumOfFollowingLoss = 0;
                 }
 
                 if (sumOfFollowingLoss < drawdown)
-                {
                     drawdown = sumOfFollowingLoss;
-                }
-
             }
             return drawdown;
-
         }
 
-
-        //Method that call all other methodes to assigne value to the attributes of the class
-        public void runMethods(List<Order> orders)
+        //Computation of the Variance
+        public float Var(List<float> dicoReturns, float mean)
         {
-            /* Run SimpleReturn method in order to calculate all returns, and then put them into a list of simple returns */
+            float sustraction;
+            float sum = 0;
 
-            //First, we need a list of all simple returns, and a variable to store tha returend value of the function
-            List<float> allSimpleReturns = new ();
-            float simpleReturn;
-
-            //Go through the list of order, and 
-            for (int i = 0; i < orders.Count; i++)
+            foreach (float returns in dicoReturns)
             {
-                if (i > 0) //because according to the formula of simple return, there is no return for the first value
+                sustraction = returns - mean;
+                sum += sustraction * sustraction;
+            }
+
+            return sum / dicoReturns.Count;
+        }
+
+        //Compute the Sharp Ratio
+        public float SharpRatio(float expectedReturns, float st_deviation)
+        {
+            //rf = Risk free rate, taken from: https://fr.tradingview.com/markets/bonds/prices-france/ the 23/03/2024
+            float rf = 3.876f; //(%)
+
+            float sharp_ratio = (expectedReturns - rf) / st_deviation;
+            return sharp_ratio;
+        }
+
+        //Computation of the Value at Risk using Historical data
+        public float HVaR95(List<float> returns)
+        {
+            returns.Sort();
+            float confidenceLevel = 0.05f;
+            int index = (int)Math.Floor(confidenceLevel * returns.Count);
+            return returns[index];
+        }
+
+        public float HVaR99(List<float> returns)
+        {
+            returns.Sort();
+            float confidenceLevel = 0.01f;
+            int index = (int)Math.Floor(confidenceLevel * returns.Count);
+            return returns[index];
+        }
+
+        //To be able to calculate the System Quality Number (SQN)
+        public float Expectancy(List<float> dicoReturns, float meanGain, float meanLoss)
+        {
+            float gainProbability = 0;
+            float lossProbability = 0;
+            float expectancy = 0;
+
+            foreach (float returns in dicoReturns)
+            {
+                if(returns > 0)
                 {
-                    simpleReturn = SimpleReturn(orders[i].EData.Price, orders[i - 1].EData.Price);
-                    allSimpleReturns.Add(simpleReturn);
+                    gainProbability++;
+                }else{
+                    lossProbability ++;
                 }
             }
 
-            /* Run TReturn method and assigne the result to totalReturn */
-            totalReturn = TReturn(allSimpleReturns);
+            gainProbability = gainProbability / dicoReturns.Count;
+            lossProbability = lossProbability / dicoReturns.Count;
 
-            /* Run EReturn method and assigne the result to expectedReturn */
-            expectedReturn = EReturn(allSimpleReturns.Count);
+            expectancy = -(gainProbability * meanGain + lossProbability * meanLoss) / meanLoss;
 
-            /* Run TLoss method and assigne the result to expectedReturn */
-            totalLoss = TLoss(allSimpleReturns);
-
-            /* Run MLoss method and assigne the result to meanLoss */
-            meanLoss = MLoss(allSimpleReturns);
-
-            /* Run TLoss method and assigne the result to expectedReturn */
-            totalGain = TGain(allSimpleReturns);
-
-            /* Run MLoss method and assigne the result to meanLoss */
-            meanGain = MGain(allSimpleReturns);
-
-            /* Run MLoss method and assigne the result to meanLoss */
-            maxDrawdown = Drawdown(allSimpleReturns);
+            return expectancy;
         }
 
+  
         override
         public String ToString()
         {
-            return String.Format("totalReturn: {0}, expectedReturn: {1}, totalLoss: {2}, meanLoss: {3}, totalGain: {4}, meanGain: {5}", totalReturn, expectedReturn, totalLoss, meanLoss, totalGain, meanGain);
+            TimeSpan Sum = TimeSpan.Zero;
+            foreach(TimeSpan position in openPositionTimes)
+            {
+                Sum += position;
+            }
+            if(openPositionTimes.Count > 0)
+            {
+                TimeSpan averageTime = TimeSpan.FromTicks(Sum.Ticks / openPositionTimes.Count());
+                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, averageTime);
+            } else
+            {
+                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, null);
+            }
         }
+
+        /*
+//Calculation of total gain (only positive returns)
+public float TGain(List<float> returns)
+{
+    float sum = 0;
+    foreach (float r in returns)
+    {
+        if (r > 0)
+            sum += r;
+    }
+    return sum;
+
+//Calculation of the total of losses (negatives returns)
+public float TLoss(List<float> returns)
+{
+    float sumOfLosses = 0;
+    foreach (float r in returns)
+    {
+        if (r < 0)
+            sumOfLosses += r;
+    }
+
+    return sumOfLosses;
+}
+
+public float Var(List<float> returns, float mean)
+{
+    float sustraction;
+    float sum = 0;
+    for (int i = 0; i < returns.Count; i++)
+    {
+        sustraction = returns[i] - mean;
+        sum += sustraction * sustraction;
+    }
+    return sum/returns.Count;
+}*/
+
+
         /*
         private void DrawDown(Order[] orders)
         {
@@ -221,10 +412,10 @@ namespace TradeSoft.Services
             //Find min and max values
             foreach (Order order in orders)
             {
-                if (order.EData.Price < minPrice)
-                    minPrice = order.EData.Price;
-                if (order.EData.Price > maxPrice)
-                    maxPrice = order.EData.Price;
+                if (order.ExecutionData.Price < minPrice)
+                    minPrice = order.ExecutionData.Price;
+                if (order.ExecutionData.Price > maxPrice)
+                    maxPrice = order.ExecutionData.Price;
             }
 
             drawDown = maxPrice - minPrice;
@@ -245,10 +436,10 @@ namespace TradeSoft.Services
                     continue;
                 else
                 {
-                    if (orders[i].EData.Price < orders[i-1].EData.Price)
+                    if (orders[i].ExecutionData.Price < orders[i-1].ExecutionData.Price)
                     {
                         isDecreasing = true;
-                        maxPrice = orders[i-1].EData.Price;
+                        maxPrice = orders[i-1].ExecutionData.Price;
 
                         //checking if it continues to decreas so that we can obtain the lowest price.
                         do
@@ -256,13 +447,13 @@ namespace TradeSoft.Services
                             if (i < orders.Length)
                             {
                                 i++;
-                                if (orders[i].EData.Price > orders[i - 1].EData.Price)
+                                if (orders[i].ExecutionData.Price > orders[i - 1].ExecutionData.Price)
                                     isDecreasing = false;
                             }
                             else
                                 isDecreasing = false;
 
-                            minPrice = orders[i].EData.Price;
+                            minPrice = orders[i].ExecutionData.Price;
 
                         }while (isDecreasing);
 

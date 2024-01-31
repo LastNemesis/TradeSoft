@@ -10,51 +10,78 @@ namespace TradeSoft.Services
 {
     public class Broker
     {
-        //store all the orders sent to the broker
-        private List<Order> _orders = new List<Order>();
-
         //store all the orders in the current Tick of exectution
-        private List<Order> _ordersLastTick = new List<Order>();
+        private List<Order> _pendingOrders = new List<Order>();
 
         //store all Positions of strategies that sent an order
         private List<Position> _positions = new List<Position>();
 
         //store the marketPrice for the current Tick of execution
         private float _marketPrice = 0f;
+        private Tick _currentTick;
+        private Logger logger;
+
+        public Broker(Logger logger)
+        {
+            this.logger = logger;
+        }
 
         //called each tick to simulate the new Tick of execution to update market values
-        public void simulateTick(Tick tick)
+        public void SimulateTick(Tick tick)
         {
-            _ordersLastTick = new List<Order>();
+            _currentTick = tick;
             _marketPrice = tick.price;
+            Console.WriteLine(_pendingOrders.Count);
+            List<Order> still_pending_orders = new List<Order>();
+
+            foreach (Order order in _pendingOrders) {
+                Console.WriteLine(order);
+                if(order.Type == OrderType.Market)
+                {
+                    ExecutionBit executionBit = new ExecutionBit(order.StratId, _marketPrice, order.Quantity, _currentTick.time);
+                    ApplyOrder(executionBit);
+                    OrderExecuted?.Invoke(order.StratId, executionBit);
+                } else if (order.Type == OrderType.Limit)
+                {
+                    if(order.Quantity < 0 && _marketPrice >= order.Price) {
+                        ExecutionBit executionBit = new ExecutionBit(order.StratId, _marketPrice, order.Quantity, _currentTick.time);
+                        ApplyOrder(executionBit);
+                        OrderExecuted?.Invoke(order.StratId, executionBit);
+                    } else if (order.Quantity > 0 && _marketPrice <= order.Price) { 
+                        ExecutionBit executionBit = new ExecutionBit(order.StratId, _marketPrice, order.Quantity, _currentTick.time);
+                        ApplyOrder(executionBit);
+                        OrderExecuted?.Invoke(order.StratId, executionBit);
+                    } else
+                    {
+                        still_pending_orders.Add(order);
+                    }
+                }
+            }
+
+            _pendingOrders.Clear();
+            _pendingOrders.AddRange(still_pending_orders);
         }
 
-        //called in the case of a Sell order
-        public void Sell(Order order) {
-            Console.WriteLine(order.ToString());
-            ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
-            order.EData = EData;
-
-            ApplyOrder(order);
-        }
-
-        //called in the case of a Buy order
-        public void Buy(Order order) {
-            Console.WriteLine(order.ToString());
-            ExecutionData EData = new ExecutionData(order.Price, order.Quantity, DateTime.Now);
-            order.EData = EData;
-
-            ApplyOrder(order);
-        }
-
-        //called by Sell and Buy function to update the position and store the applied order
-        public void ApplyOrder(Order order)
+        public void MarketOrder(int stratId, float quantity)
         {
-            Position position = GetPosition(order.Strat_ID);
-            position.UpdatePosition(order);
+            Order order = new MarketOrder(stratId, quantity, _currentTick.time);
+            logger.LogOrder(order);
+            _pendingOrders.Add(order);
+        }
 
-            _ordersLastTick.Add(order);
-            _orders.Add(order);
+        public void LimitOrder(int stratId, float quantity, float limitPrice)
+        {
+            Order order = new LimitOrder(stratId, quantity, limitPrice, _currentTick.time);
+            logger.LogOrder(order);
+            _pendingOrders.Add(order);
+        }
+
+        //update the position
+        public void ApplyOrder(ExecutionBit executionBit)
+        {
+            logger.LogExecutedBit(executionBit);
+            Position position = GetPosition(executionBit.Id);
+            position.UpdatePosition(executionBit);
         }
 
         //used to get the Position of a given Strategy
@@ -85,16 +112,6 @@ namespace TradeSoft.Services
             return 0f; //if no position found for the strategy, it mean no position was ever taken
         }
 
-        //used to get all order for the current Tick of execution
-        public List<Order> GetTickOrders()
-        {
-            return _ordersLastTick;
-        }
-
-        //used to get all orders
-        public List<Order> GetAllOrders()
-        {
-            return _orders;
-        }
+        public event EventHandler<ExecutionBit> OrderExecuted;
     }
 }

@@ -9,26 +9,23 @@ namespace TradeSoft.Models
 {
     public class ExecutionData
     {
-        // Order price
         private float _price;
-
-        // Could be named "Size"
         private float _quantity;
-
-        // Order time
+        private OrderType _type;
         private DateTime _dt;
 
         //properties : getters and setters for each field
-        public float Price
-        {
-            get { return _price; }
-            set { _price = value; }
-        }
 
         public float Quantity
         {
             get { return _quantity; }
             set { _quantity = value; }
+        }
+
+        public OrderType Type
+        {
+            get { return _type; }
+            set { _type = value; }
         }
         public DateTime DT
         {
@@ -36,10 +33,8 @@ namespace TradeSoft.Models
             set { _dt = DateTime.Now; }
         }
 
-        public ExecutionData(float price, float quantity, DateTime dt)
+        public ExecutionData(float quantity, DateTime dt)
         {
-            _price = price;
-
             _quantity = quantity;
 
             _dt = dt;

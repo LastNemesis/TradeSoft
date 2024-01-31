@@ -32,16 +32,28 @@ namespace TradeSoft.Models
         {
             return;
         }
-        protected void Sell(float quantity, float price)
+        protected void Sell(float quantity, float price = 0.0f, OrderType type = OrderType.Market)
         {
-            Order order = new Order(Id, price, quantity, OrderType.sell, DateTime.Now);
-            _broker.Sell(order);
+            if(type == OrderType.Market)
+            {
+                _broker.MarketOrder(Id, -quantity);
+            }
+            else if (type == OrderType.Limit)
+            {
+                 _broker.LimitOrder(Id, -quantity, price);
+            }
         }
 
-        protected void Buy(float quantity, float price)
+        protected void Buy(float quantity, float price = 0.0f, OrderType type = OrderType.Market)
         {
-            Order order = new Order(Id, price, quantity, OrderType.buy, DateTime.Now);
-            _broker.Buy(order);
+            if (type == OrderType.Market)
+            {
+                _broker.MarketOrder(Id, quantity);
+            }
+            else if (type == OrderType.Limit)
+            {
+                _broker.LimitOrder(Id, quantity, price);
+            }
         }
 
         public void Close(Tick lastTick)
@@ -57,7 +69,7 @@ namespace TradeSoft.Models
             }
         }
 
-        public virtual void Notify(Order order)
+        public virtual void Notify(ExecutionBit executionBit)
         //called after Order execution, to notify strategy of what was executed in the order
         {
             return;

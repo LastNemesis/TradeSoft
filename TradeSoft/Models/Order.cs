@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,30 +21,45 @@ namespace TradeSoft.Models
      */
     public class Order
     {
-        // Unique identifier of the strategy behind his order
-        private int _strat_ID;
+        // Static field to keep track of the last assigned ID
+        protected static int id_counter = 0;
+
+        // Unique identifier of the order
+        protected int _orderId;
+
+        // Unique identifier of the strategy behind this order
+        protected int _stratId;
 
         // Order price
-        private float _price;
+        protected float _price;
 
         // Could be named size
-        private float _quantity;
+        protected float _quantity;
+
+        private List<ExecutionBit> _executionBits = new List<ExecutionBit>();
 
         // Buy or sell
-        private OrderType _type { get; set; }
+        protected OrderType _type;
+
+        // Status of the Order Completion
+        protected OrderStatus _status;
 
         // Order time-stamp
-        private DateTime _dt;
+        protected DateTime _dt;
 
         // Execution data
         private ExecutionData _executionData;
 
-
-        //All preperties, getter and setter of each field
-        public int Strat_ID
+        // Properties, getters, and setters
+        public int OrderId
         {
-            get { return _strat_ID; }
-            set { _strat_ID = value; }
+            get { return _orderId; }
+        }
+
+        public int StratId
+        {
+            get { return _stratId; }
+            set { _stratId = value; }
         }
 
         public float Price
@@ -57,45 +73,86 @@ namespace TradeSoft.Models
             get { return _quantity; }
             set { _quantity = value; }
         }
+
         public DateTime DT
         {
             get { return _dt; }
-            set { _dt = DateTime.Now; }
+            set { _dt = value; }
         }
 
-        public ExecutionData EData
+        public ExecutionData ExecutionData
         {
             get { return _executionData; }
             set { _executionData = value; }
         }
 
-
-        override
-        public String ToString()
+        public List<ExecutionBit> ExecutionBits
         {
-            return String.Format("Strategy {0} price: {1} quantity {2}" ,_strat_ID, _price, _quantity);
+            get { return _executionBits;  }
+            set { _executionBits = value; }
         }
 
-
-        public Order(int strat_ID, float price, float quantity, OrderType type, DateTime dt)
+        public OrderStatus Status
         {
-            
-            _strat_ID = strat_ID;
-            
-            _price = price;
-            
+            get { return _status; }
+            set { _status = value; }
+        }
+
+        public OrderType Type
+        {
+            get { return _type; }
+        }
+
+        public Order(int stratId, float quantity, DateTime dt)
+        {
+            // Assigning a unique order ID
+            _orderId = ++id_counter;
+
+            _stratId = stratId;
             _quantity = quantity;
-            
-            _type = type;
-            
             _dt = dt;
         }
     }
 
+    public class MarketOrder : Order
+    {
+        public MarketOrder(int stratId, float quantity, DateTime dt) : base(stratId, quantity, dt)
+        {
+            _type = OrderType.Market;
+        }
 
+        public override string ToString()
+        {
+            return $"MarketOrder, ID: {_orderId}, Strategy ID: {_stratId}, Quantity: {_quantity}, Time {_dt}";
+        }
+    }
+
+    public class LimitOrder : Order
+    {
+        public LimitOrder(int stratId, float quantity, float limitPrice, DateTime dt) : base(stratId, quantity, dt)
+        {
+            _type = OrderType.Limit;
+            _price = limitPrice;
+        }
+
+        public override string ToString()
+        {
+            return $"LimitOrder, ID: {_orderId}, Strategy ID: {_stratId}, Quantity: {_quantity}, LimitPrice: {_price} Time {_dt}";
+        }
+    }
     public enum OrderType
     {
-        buy,
-        sell
+        Market,
+        Limit,
+        Stop,
+        StopLimit
+    }
+
+    public enum OrderStatus
+    {
+        submitted,
+        accepted,
+        partial,
+        completed,
     }
 }

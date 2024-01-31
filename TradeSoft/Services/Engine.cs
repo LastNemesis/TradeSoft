@@ -5,42 +5,30 @@ namespace TradeSoft.Services
 {
     internal class Engine
     {
-        public void Run(List<Tick> ticks)
+        public void Run(DataService dataService)
         {
-            Broker broker = new Broker();
-            StrategyHandler strategyHandler = new StrategyHandler();
-            strategyHandler.SetBrocker(broker);
+            Logger logger = new Logger(Path.Combine("..", "..", "..", "..", "TradeSoft", "Logs", "log.txt"));
+            Broker broker = new Broker(logger);
+            StrategyHandler strategyHandler = new StrategyHandler(broker);
+            AnalysisHandler analysisHandler = new AnalysisHandler(strategyHandler.GetStrategiesId(), logger);
 
-            foreach(Tick tick in ticks)
+            broker.OrderExecuted += strategyHandler.NotifyStrategies;
+            broker.OrderExecuted += analysisHandler.AnalyseExecutionBit;
+
+            foreach (Tick tick in dataService.ticks())
             {
                 Console.WriteLine(tick.ToString());
-                broker.simulateTick(tick);
-                strategyHandler.SendTick(tick); //to be made async ?
+                logger.LogTick(tick);
+                broker.SimulateTick(tick);
+                strategyHandler.SendTick(tick);
 
-                //wait until next tick ? using Clock ?
-
-                List<Order> tickOrders = broker.GetTickOrders();
-                strategyHandler.NotifyStrategies(tickOrders);
-                Console.WriteLine("\n");
+                logger.Log();
             }
 
+            Console.WriteLine("end ?");
             //define how we use the ticks to have access to the last tick
             //maybe Strategies directly get market price from Broker in Close method ?
-            strategyHandler.CloseStrategies(ticks[^1]);
-
-            List<Order> orders = broker.GetAllOrders();
-            foreach(Order order in orders)
-            {
-                Console.WriteLine(order.ToString());
-            }
-            Console.WriteLine(orders.Count);
-            //send orders to strategies
-
-            //log results: orders/ticks/analysis results
-            Analysis riskAnalysis = new Analysis();
-            riskAnalysis.runMethods(orders);
-
-            Console.WriteLine(riskAnalysis.ToString());
+            //strategyHandler.CloseStrategies(dataService.listTicks[^1]);
         }
     }
 }
