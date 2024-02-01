@@ -10,70 +10,37 @@ using TradeSoft.Models;
 
 
 /* This is Analysis class.
- * This class will be instanciated by each strategies to perform some analysis about the performance of the strategy
- * 
- * 
- * --> rappeler que le module est appelé à chaque executionData from broker
- * 
- * --> liste de rendements pour le retourner à la fin 
- * --> expected return on va le garder et l'update, il sera calculer à partir des valeurs du ExecuteData actuelle
- * et des rendements précédants stockés dans la liste, de sorte que le trader puissent voir la moyennede rendement
- * qu'il produit avec sa stratégie à tout moment.
- * 
- * Récupération du rendement: (ça normalement c'est fait)
- * on fait un total des Qty à chaque order.
- * Si Qty > 0 : A la prochaine Vente(Sell) on récup le rendement
- * Si Qty < 0 : Au prochain Achat(Buy) on récup le rendement
- * 
- * 
- * --> rechercher comment calculer la volatilité (ecart-type) en backtesting
- * (a chaque execution data, sans que ça explose quand on a 1324652243 execution data)
- * 
- * On garde TLoss et MLoss pour les afficher que quand le rendement actuel est négatif
- * On garde TGain et MGain pour les afficher que quand le rendement actuel est positif
+ * This class will be instanciated by each strategies to perform some analysis about the performance of the strategy.
+ * Analysis module is called for each execution
  */
 
 namespace TradeSoft.Services
 {
     public class Analysis
     {
-        private float initAmount; //monant initial du portfilio
+        /*    Amount of portfolio at different time (t0, t and t-1),and quantity    */
+        private float initAmount;         
         private float currentAmount;
         private float previousAmount;
 
-        private float actualQuantity = 0; //c'est la variable qui va accumuler les quantité pour qu'on puisse connaitre la position, et donc à quel moment on doit calculer le rendement.
+        private float actualQuantity = 0; //compute qauntity so that we can know the position (shrt or long)
 
 
         /*          About return            */
 
-        private float cumulativeReturn; //c'est un %, return par rapport au montant initial
-        private float currentReturn; // par rapport à l'état précédant (montant précédant) (%)
-        private float expectedReturn; //expected return per transaction (%)
+        private float cumulativeReturn; // return according to initial amount  (in %)
+        private float currentReturn;    // return according to previous amount (in %)
+        private float expectedReturn;   // expected return per transaction     (in %)
 
-        //Initialisation of an internal clock to get the average time of an open position to be close
-        Stopwatch sw = new Stopwatch();
-        List<TimeSpan> openPositionTimes = new List<TimeSpan>();
-
-        //Variable storing the amount of the total losses over all the period (do not taking gains into account)
-        //private float totalLoss;
-
-        //Variable storing mean of losses par transactions (only over losses)
+        //private float totalLoss; //cumulation of losses over all the period
         private float meanLoss;
 
-        //Variable storing the amount of the total gain over all the period (do not taking losses into account)
-        //private float totalGain;
-
-        //Variable storing mean of gain par transactions (only over gains)
+        //private float totalGain; //cumulation of losses over all the period
         private float meanGain;
 
-        //Variable calculating the difference between higher and lowest price over the period
-        private float maxDrawdown; // possible improvement : donné la période (entre quand et quand c'est arrivé)
+        private float maxDrawdown; // possible improvement : give period (when does it occurs ?)
         private float worst = 0f;
         private float best = 0f;
-
-        public ExecutionBit executed {  get; set; }
-
-        List<float> historicOfReturns = new List<float>();
 
         /*          About risk            */
 
@@ -85,6 +52,15 @@ namespace TradeSoft.Services
         private float historicalVaR95;
         private float historicalVaR99;
 
+        /*             Other               */
+        //Initialisation of an internal clock to get the average time of an open position to be close
+        Stopwatch sw = new Stopwatch();
+        List<TimeSpan> openPositionTimes = new List<TimeSpan>();
+
+        public ExecutionBit executed { get; set; }
+
+        List<float> historicOfReturns = new List<float>();
+
         /*          Constructor            */
         public Analysis(float initAmount)
         {
@@ -93,18 +69,8 @@ namespace TradeSoft.Services
         }
 
 
-        /*      Method for calculation      */
-        /* Pour effectuer les méthodes, je me suis demandé si il était préférable de :
-         * A) faire des méthodes void qui modifient directement les attribue de ma classe
-         * B) faire des méthodes de types return, et ajouter une méthode à la fin qui me permet de toutes les exécuter
-         * et d'affecter les returns de ces méthodes aux attributs de la classe
-         * 
-         * Au final, je choisi l'option B, parce que les types void sont trop difficile à tester (test unitaire).
-         * Les types retour me permettrons de faire de bons tests unitaires.
-         */
-
-
-        public void runMethods() //méthode dans laquelle on appelle les autres méthodes et ou on fait les check pour savoir quoi faire
+        // Main method of the class
+        public void runMethods()
         {
             //Start my inerClock when we take a position
             if (actualQuantity == 0)
@@ -113,11 +79,11 @@ namespace TradeSoft.Services
             }
 
             //update amount of portfolio
-            currentAmount += executed.Price * executed.Quantity; //pas besoin de vérifier si c'est un sell ou un buy car la qunatité est négative en cas de sell donc le prix sera négatif
- 
-            /* step 1 : je regarde si la quantité est positive, 
-             * si oui, on est en long, donc on calcule le rendement à la prochaine vente
-             * si non, on est en short, donc on calcule le rendement au prochain buy 
+            currentAmount += executed.Price * executed.Quantity;
+
+            /* step 1 : check if quantity > 0, 
+             * yes --> long position, we compute return on the next sell
+             * no --> short position, we compute return on the next buy
              */
             if ((actualQuantity > 0) || (actualQuantity < 0)) 
             {
@@ -134,14 +100,14 @@ namespace TradeSoft.Services
                 historicOfReturns.Add(currentReturn);
                 previousAmount = currentAmount;
 
-                if (historicOfReturns.Count > 1) //Si c'est pas la première opération, alors on peut ressortir des analyses selon les précédantes executions
+                if (historicOfReturns.Count > 1) //If it's not the first operation, we can make analysis according to previous results
                 {
                     expectedReturn = EReturn(historicOfReturns);
 
-                    if(cumulativeReturn > 0) //alors la moyenne de gain, en excluant les pertes
+                    if(cumulativeReturn > 0)
                     {
                         meanGain = MGain(historicOfReturns);
-                    }else{ //alors on retourne la moyenne des pertes quand on exclu les gains
+                    }else{
                         meanLoss = MLoss(historicOfReturns);
                     }
 
@@ -149,14 +115,12 @@ namespace TradeSoft.Services
                     volatility = (float)Math.Sqrt(Var(historicOfReturns, expectedReturn));
                     sharpRatio = SharpRatio(expectedReturn, volatility);
 
-                    //Simplifier en faisant 1 seule méthode, et on passe en paramètre le % de précision
-                    //historicalVaR95 = HVaR95(historicOfReturns) / initAmount * 100; //en pourcentage par rapport au portefeuille de base
-                    //historicalVaR99 = HVaR99(historicOfReturns) / initAmount * 100;
+                    historicalVaR95 = HVaR(historicOfReturns, 95) / initAmount * 100; // in % according to initial initial portfolio
+                    historicalVaR99 = HVaR(historicOfReturns, 99) / initAmount * 100;
 
                 }
                 else{
                     expectedReturn = cumulativeReturn;
-                    //variance = 0;
                     volatility = 0;
                 }
 
@@ -298,28 +262,21 @@ namespace TradeSoft.Services
         public float SharpRatio(float expectedReturns, float st_deviation)
         {
             //rf = Risk free rate, taken from: https://fr.tradingview.com/markets/bonds/prices-france/ the 23/03/2024
-            float rf = 3.876f; //(%)
+            float rf = 3.876f / 86400000f; //(%), and multiplied by convertor factor because 3.876% is the daily expected return.
 
             float sharp_ratio = (expectedReturns - rf) / st_deviation;
             return sharp_ratio;
         }
 
         //Computation of the Value at Risk using Historical data
-        public float HVaR95(List<float> returns)
+        public float HVaR(List<float> returns, float confidenceLevel)
         {
             returns.Sort();
-            float confidenceLevel = 0.05f;
+            confidenceLevel = (100 - confidenceLevel)/100;
             int index = (int)Math.Floor(confidenceLevel * returns.Count);
             return returns[index];
         }
 
-        public float HVaR99(List<float> returns)
-        {
-            returns.Sort();
-            float confidenceLevel = 0.01f;
-            int index = (int)Math.Floor(confidenceLevel * returns.Count);
-            return returns[index];
-        }
 
         //To be able to calculate the System Quality Number (SQN)
         public float Expectancy(List<float> dicoReturns, float meanGain, float meanLoss)
@@ -358,10 +315,10 @@ namespace TradeSoft.Services
             if(openPositionTimes.Count > 0)
             {
                 TimeSpan averageTime = TimeSpan.FromTicks(Sum.Ticks / openPositionTimes.Count());
-                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, averageTime);
+                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Historique VaR: {6}, Average opentime position: {7}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, historicalVaR95, averageTime);
             } else
             {
-                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Average opentime position: {5}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, null);
+                return String.Format("cumulativeReturn: {0}, actualReturn: {1}, meanLoss: {2}, meanGain: {3}, Volatility: {4}, Sharp_Ratio: {5}, Historique VaR: {6}, Average opentime position: {7}", cumulativeReturn, historicOfReturns.Count > 0 ? historicOfReturns[^1] : 0.0f, meanLoss, meanGain, volatility, sharpRatio, historicalVaR95, null);
             }
         }
 

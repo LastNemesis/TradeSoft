@@ -44,13 +44,13 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_EReturn_ShouldCalculateExpectedReturn()
         {
             //Arrange - get variable, classes, ... to test
-            List<float> dicoReturns = new List<float> { -20, -12.5f, 28.5f };
+            List<float> listReturns = new List<float> { -20, -12.5f, 28.5f };
 
             float totalReturn = -20 - 12.5f + 28.5f;
-            float expectedReturn = totalReturn / dicoReturns.Count;
+            float expectedReturn = totalReturn / listReturns.Count;
 
             //Act - run the méthode to test
-            float result = _analysis.EReturn(dicoReturns);
+            float result = _analysis.EReturn(listReturns);
 
             //Assert - Waht it should return
             result.Should().Be(expectedReturn);
@@ -61,13 +61,13 @@ namespace TradeSoft.Tests.AnalyserTest
         {
             //Arrange - get variable, classes, ... to test
             //List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f};
-            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
+            List<float> listReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float totalLoss = (-20f - 12.5f - 3.16f);
             int nbLoss = 3;
             float meanLoss = totalLoss / nbLoss;
 
             //Act - run the méthode to test
-            float result = _analysis.MLoss(dicoReturns);
+            float result = _analysis.MLoss(listReturns);
 
             //Assert - Waht it should return
             result.Should().Be(meanLoss);
@@ -78,13 +78,13 @@ namespace TradeSoft.Tests.AnalyserTest
         {
             //Arrange - get variable, classes, ... to test
             //List<float> allReturns = new () { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, 4.0f, -3.0f };
-            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
+            List<float> listReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float totalGain = (28.5f + 5.56f);
             int nbGain = 2;
             float meanGain = totalGain / nbGain;
 
             //Act - run the méthode to test
-            float result = _analysis.MGain(dicoReturns);
+            float result = _analysis.MGain(listReturns);
 
             //Assert - Waht it should return
             result.Should().Be(meanGain);
@@ -108,12 +108,12 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_Var_ShouldReturnVariance()
         {
             //Arrange - get variable, classes, ... to test
-            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
+            List<float> listReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float mean = (-20f - 12.5f + 28.5f + 5.56f - 3.16f) / 5; //-0,32
             float variance = (387.3024f + 148.3524f + 830.5924f + 34.5744f + 8.0656f) / 5f;
 
             //Act - run the méthode to test
-            float result = _analysis.Var(dicoReturns, mean);
+            float result = _analysis.Var(listReturns, mean);
 
             //Assert - Waht it should return
             result.Should().Be(variance);
@@ -123,31 +123,29 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_Expectancy_ShouldReturnExpectancy()
         {
             //Arrange - get variable, classes, ... to test
-            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
+            List<float> listReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float meanGain = 17.03f;
             float meanLoss = -11.87f;
             float expectancy = -(meanGain * 0.4f + meanLoss * 0.6f) / meanLoss;
 
 
             //Act - run the méthode to test
-            float result = _analysis.Expectancy(dicoReturns, meanGain, meanLoss);
+            float result = _analysis.Expectancy(listReturns, meanGain, meanLoss);
 
             //Assert - Waht it should return
             result.Should().Be(expectancy);
         }
 
 
-
-
         [Fact]
-        public void Analysis_HVaR95_ShouldCalculateValueAtRiskAt95Percent()
+        public void Analysis_HVaR_ShouldCalculateValueAtRiskAt95Percent()
         {
             //Arrange - get variable, classes, ... to test
             List<float> allReturns = new() { 1.0f, -2.0f, 3.0f, 4.0f, -1.0f, -1.0f, 4.0f, -3.0f, -2.0f, -1.0f, 2.0f, 1.0f, -2.0f };
             float VaR = (-3.0f);
 
             //Act - run the méthode to test
-            float result = _analysis.HVaR95(allReturns);
+            float result = _analysis.HVaR(allReturns, 95);
 
             //Assert - Waht it should return
             result.Should().Be(VaR);
@@ -158,7 +156,7 @@ namespace TradeSoft.Tests.AnalyserTest
         public void Analysis_SharpRatio_ShouldCalculateFloat() //Return a percentage
         {
             //Arrange
-            List<float> dicoReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
+            List<float> listReturns = new List<float> { -20f, -12.5f, 28.5f, 5.56f, -3.16f };
             float mean = (-20f - 12.5f + 28.5f + 5.56f - 3.16f) / 5f; //-0,32
             float variance = (387.3024f + 148.3524f + 830.5924f + 34.5744f + 8.0656f) / 5f;
             float stDeviation = (float)Math.Sqrt(variance);
